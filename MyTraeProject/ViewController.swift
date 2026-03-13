@@ -12,6 +12,15 @@ class ListViewController: UIViewController {
     private var lists: [TravelList] = []
     private let tableView = UITableView()
     
+    // 辅助方法：计算某个清单的P0进度
+    private func p0Progress(for list: TravelList) -> (checked: Int, total: Int, percentage: Double) {
+        let p0Items = list.items.filter { $0.priority == .p0 }
+        let checkedCount = p0Items.filter { $0.isChecked }.count
+        let totalCount = p0Items.count
+        let percentage = totalCount > 0 ? Double(checkedCount) / Double(totalCount) : 0
+        return (checkedCount, totalCount, percentage)
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -20,7 +29,7 @@ class ListViewController: UIViewController {
     
     private func setupUI() {
         title = "旅行清单"
-        view.backgroundColor = UIColor.red 
+        view.backgroundColor = UIColor.systemBackground
         
         navigationItem.rightBarButtonItem = UIBarButtonItem(
             barButtonSystemItem: .add,
@@ -29,7 +38,7 @@ class ListViewController: UIViewController {
         )
         
         tableView.translatesAutoresizingMaskIntoConstraints = false
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "ListCell")
+        tableView.register(ListCell.self, forCellReuseIdentifier: "ListCell")
         tableView.delegate = self
         tableView.dataSource = self
         view.addSubview(tableView)
@@ -85,10 +94,10 @@ extension ListViewController: UITableViewDataSource, UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ListCell", for: indexPath)
+        let cell = tableView.dequeueReusableCell(withIdentifier: "ListCell", for: indexPath) as! ListCell
         let list = lists[indexPath.row]
-        cell.textLabel?.text = list.name
-        cell.accessoryType = .disclosureIndicator
+        let progress = p0Progress(for: list)
+        cell.configure(name: list.name, checkedCount: progress.checked, totalCount: progress.total, percentage: progress.percentage)
         return cell
     }
     
@@ -143,6 +152,61 @@ extension ListViewController: DetailViewControllerDelegate {
     func detailViewController(_ controller: DetailViewController, didUpdateList list: TravelList, at index: Int) {
         lists[index] = list
         saveData()
+        tableView.reloadRows(at: [IndexPath(row: index, section: 0)], with: .automatic)
+    }
+}
+
+// 自定义列表单元格
+class ListCell: UITableViewCell {
+    private let nameLabel = UILabel()
+    private let progressLabel = UILabel()
+    private let progressBar = UIProgressView(progressViewStyle: .default)
+    
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        setupUI()
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    private func setupUI() {
+        accessoryType = .disclosureIndicator
+        
+        nameLabel.font = .systemFont(ofSize: 16, weight: .medium)
+        nameLabel.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(nameLabel)
+        
+        progressLabel.font = .systemFont(ofSize: 12)
+        progressLabel.textColor = .secondaryLabel
+        progressLabel.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(progressLabel)
+        
+        progressBar.tintColor = Priority.p0.color
+        progressBar.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(progressBar)
+        
+        NSLayoutConstraint.activate([
+            nameLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
+            nameLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            nameLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            
+            progressLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 8),
+            progressLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
+            
+            progressBar.topAnchor.constraint(equalTo: progressLabel.bottomAnchor, constant: 4),
+            progressBar.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
+            progressBar.trailingAnchor.constraint(equalTo: nameLabel.trailingAnchor),
+            progressBar.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12),
+            progressBar.heightAnchor.constraint(equalToConstant: 6)
+        ])
+    }
+    
+    func configure(name: String, checkedCount: Int, totalCount: Int, percentage: Double) {
+        nameLabel.text = name
+        progressLabel.text = "P0: \(checkedCount)/\(totalCount)"
+        progressBar.progress = Float(percentage)
     }
 }
 

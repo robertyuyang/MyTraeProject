@@ -76,24 +76,29 @@ class DetailViewController: UIViewController {
     private func updateProgress() {
         let items = travelList.items
         
-        for priority in Priority.allCases {
-            let priorityItems = items.filter { $0.priority == priority }
-            let checkedCount = priorityItems.filter { $0.isChecked }.count
-            let totalCount = priorityItems.count
-            let percentage = totalCount > 0 ? Double(checkedCount) / Double(totalCount) : 0
-            
-            switch priority {
-            case .p0:
-                p0ProgressView.progress = percentage
-                p0ProgressView.subtitle = "\(checkedCount)/\(totalCount)"
-            case .p1:
-                p1ProgressView.progress = percentage
-                p1ProgressView.subtitle = "\(checkedCount)/\(totalCount)"
-            case .p2:
-                p2ProgressView.progress = percentage
-                p2ProgressView.subtitle = "\(checkedCount)/\(totalCount)"
-            }
-        }
+        // P0: 只统计 P0
+        let p0Items = items.filter { $0.priority == .p0 }
+        let p0CheckedCount = p0Items.filter { $0.isChecked }.count
+        let p0TotalCount = p0Items.count
+        let p0Percentage = p0TotalCount > 0 ? Double(p0CheckedCount) / Double(p0TotalCount) : 0
+        p0ProgressView.progress = p0Percentage
+        p0ProgressView.subtitle = "\(p0CheckedCount)/\(p0TotalCount)"
+        
+        // P1: 统计 P0 + P1
+        let p1Items = items.filter { $0.priority.rawValue <= Priority.p1.rawValue }
+        let p1CheckedCount = p1Items.filter { $0.isChecked }.count
+        let p1TotalCount = p1Items.count
+        let p1Percentage = p1TotalCount > 0 ? Double(p1CheckedCount) / Double(p1TotalCount) : 0
+        p1ProgressView.progress = p1Percentage
+        p1ProgressView.subtitle = "\(p1CheckedCount)/\(p1TotalCount)"
+        
+        // P2: 统计全部
+        let p2Items = items.filter { $0.priority.rawValue <= Priority.p2.rawValue }
+        let p2CheckedCount = p2Items.filter { $0.isChecked }.count
+        let p2TotalCount = p2Items.count
+        let p2Percentage = p2TotalCount > 0 ? Double(p2CheckedCount) / Double(p2TotalCount) : 0
+        p2ProgressView.progress = p2Percentage
+        p2ProgressView.subtitle = "\(p2CheckedCount)/\(p2TotalCount)"
     }
     
     private func saveAndUpdate() {
