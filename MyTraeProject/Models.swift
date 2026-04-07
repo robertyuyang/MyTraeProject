@@ -46,11 +46,13 @@ struct TravelList: Codable, Equatable {
     let id: UUID
     var name: String
     var items: [TravelItem]
+    var imageUrl: String?
     
     init(name: String) {
         self.id = UUID()
         self.name = name
         self.items = []
+        self.imageUrl = nil
     }
 }
 

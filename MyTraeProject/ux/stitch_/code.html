@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-container": "#633700",
+                        "on-tertiary-fixed-variant": "#930005",
+                        "surface-bright": "#faf9fe",
+                        "on-error": "#ffffff",
+                        "tertiary-container": "#e2241f",
+                        "error-container": "#ffdad6",
+                        "surface-container-highest": "#e3e2e7",
+                        "secondary-container": "#fe9400",
+                        "outline-variant": "#c1c6d7",
+                        "on-tertiary-fixed": "#410001",
+                        "on-background": "#1a1b1f",
+                        "surface-container-low": "#f4f3f8",
+                        "surface-tint": "#005bc1",
+                        "tertiary-fixed-dim": "#ffb4aa",
+                        "surface": "#faf9fe",
+                        "primary-container": "#0070eb",
+                        "on-surface": "#1a1b1f",
+                        "on-secondary-fixed-variant": "#6a3b00",
+                        "inverse-surface": "#2f3034",
+                        "on-secondary": "#ffffff",
+                        "surface-dim": "#dad9df",
+                        "on-secondary-fixed": "#2d1600",
+                        "secondary-fixed": "#ffdcbf",
+                        "inverse-on-surface": "#f1f0f5",
+                        "secondary": "#8c5000",
+                        "primary-fixed": "#d8e2ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed": "#001a41",
+                        "on-tertiary-container": "#fffbff",
+                        "on-surface-variant": "#414755",
+                        "on-primary-container": "#fefcff",
+                        "on-primary": "#ffffff",
+                        "primary-fixed-dim": "#adc6ff",
+                        "outline": "#717786",
+                        "surface-container-high": "#e9e7ed",
+                        "surface-container": "#eeedf3",
+                        "secondary-fixed-dim": "#ffb874",
+                        "on-error-container": "#93000a",
+                        "error": "#ba1a1a",
+                        "background": "#faf9fe",
+                        "tertiary-fixed": "#ffdad5",
+                        "tertiary": "#bc000a",
+                        "on-primary-fixed-variant": "#004493",
+                        "surface-variant": "#e3e2e7",
+                        "inverse-primary": "#adc6ff",
+                        "on-tertiary": "#ffffff",
+                        "primary": "#0058bc"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bg-editorial-gradient {
+            background: linear-gradient(135deg, #0058bc 0%, #0070eb 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased min-h-screen">
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky z-40 bg-[#faf9fe] dark:bg-[#1a1b1f] flex items-center px-6 py-4 w-full h-16">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#0058bc] dark:text-[#adc6ff]" data-icon="luggage">luggage</span>
+<h1 class="font-plus-jakarta-sans font-extrabold text-xl tracking-tight text-[#0058bc] dark:text-[#adc6ff]">The Editorial Traveler</h1>
+</div>
+</header>
+<main class="max-w-4xl mx-auto px-6 pb-32 pt-8">
+<!-- Page Header -->
+<div class="mb-10">
+<h2 class="font-headline text-3xl font-extrabold tracking-tight text-on-surface mb-2">My Trips</h2>
+</div>
+<!-- Trip Status Summary (The Progress Stepper Logic) -->
+<!-- Trips List (High-end Bento-ish Slab Layout) -->
+<div class="grid gap-6">
+<!-- Trip Card 1 -->
+<div class="bg-surface-container-lowest rounded-xl p-6 transition-all duration-150 active:scale-[0.98] group">
+<div class="flex flex-col md:flex-row md:items-start justify-between gap-6">
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-3">
+<span class="bg-tertiary-container text-on-tertiary-container text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">Urgent</span>
+</div>
+<h4 class="font-headline text-2xl mb-1 group-hover:text-primary transition-colors">Coastal Highway Expedition</h4>
+<!-- Progress Bars Stack -->
+<div class="space-y-4">
+<!-- P0 Progress -->
+<div>
+<div class="flex justify-between items-center mb-1.5">
+<label class="text-[11px] font-bold text-tertiary uppercase tracking-tighter flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="priority_high">priority_high</span>
+                                        Critical Essentials (P0)
+                                    </label>
+<span class="text-[11px] font-bold text-tertiary">4/5</span>
+</div>
+<div class="w-full h-1.5 bg-tertiary-fixed rounded-full overflow-hidden">
+<div class="h-full bg-tertiary rounded-full" style="width: 80%;"></div>
+</div>
+</div>
+<!-- Total Progress -->
+<div>
+<div class="flex justify-between items-center mb-1.5">
+<label class="text-[11px] font-bold text-on-surface-variant uppercase tracking-tighter">Total Preparation</label>
+<span class="text-[11px] font-bold text-on-surface">12/28</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 42%;"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="w-full md:w-48 h-32 rounded-lg overflow-hidden shrink-0">
+<img alt="Coastal road" class="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-300" data-alt="Winding coastal highway overlooking blue ocean cliffs with golden sunlit grassy hillsides in California" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBOsORc66DXuZ8PSzvE5b6q40ZH60cZTArPesqfGCS_u49X7D4v_Y8wNN6NX9dFFpYm6i4jfNYIiBJSQoEIsFsHtS1OmrXkIBIEMTb9dIqwGpz4s5L4viOQRz8QzNdpFhAlGOaDL7gwjpxu92WSbc0P4qKDabd6tpgGgyShX-Z-kl850xgyoor-mTOBNT2b-aOANFTFo_r6KPydURdNxEABz5jXJikny8e5M5-NfkK-oiPFPiP6onRy1IdBQ-m9Sb0rP7ircm-Uk1U"/>
+</div>
+</div>
+</div>
+<!-- Trip Card 2 -->
+<div class="bg-surface-container-lowest rounded-xl p-6 transition-all duration-150 active:scale-[0.98] group">
+<div class="flex flex-col md:flex-row md:items-start justify-between gap-6">
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-3">
+<span class="bg-secondary-container text-on-secondary-container text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">Planning</span>
+</div>
+<h4 class="font-headline text-2xl mb-1 group-hover:text-primary transition-colors">Wine Country Retreat</h4>
+<div class="space-y-4">
+<!-- P0 Progress -->
+<div>
+<div class="flex justify-between items-center mb-1.5">
+<label class="text-[11px] font-bold text-tertiary uppercase tracking-tighter flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="priority_high">priority_high</span>
+                                        Critical Essentials (P0)
+                                    </label>
+<span class="text-[11px] font-bold text-tertiary">2/6</span>
+</div>
+<div class="w-full h-1.5 bg-tertiary-fixed rounded-full overflow-hidden">
+<div class="h-full bg-tertiary rounded-full" style="width: 33%;"></div>
+</div>
+</div>
+<!-- Total Progress -->
+<div>
+<div class="flex justify-between items-center mb-1.5">
+<label class="text-[11px] font-bold text-on-surface-variant uppercase tracking-tighter">Total Preparation</label>
+<span class="text-[11px] font-bold text-on-surface">5/15</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 33%;"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="w-full md:w-48 h-32 rounded-lg overflow-hidden shrink-0">
+<img alt="Vineyard" class="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-300" data-alt="A lush green vineyard at sunrise with soft morning mist between rows of grapes and distant rolling hills" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8bWMnuD09E6HFCrAKOiZs5t_htS97caZdRX68iFN04FVP6Qz361Xwwz_mJiVqUUt9QukM7JNCjxVphYwhxGYzA2qjblXSf-t5XG6d8lVS3ybD6Uj23_rQ3Px_ftsi3Lz-vm5tvCw_aqrYXdwZo4ll5HpO58O_XM7cDMq4fS0ZDMDHHYnexgKwNDSaL0sOdSyGaO5g017M4PNoY95bjTgrZVGsWSNgudvRLWfd5gAZ7q3fo9On2P5T8BZKN8SYA1wycrnhrszdDvU"/>
+</div>
+</div>
+</div>
+<!-- Trip Card 3 -->
+<div class="bg-surface-container-lowest rounded-xl p-6 transition-all duration-150 active:scale-[0.98] group">
+<div class="flex flex-col md:flex-row md:items-start justify-between gap-6">
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-3">
+<span class="bg-surface-container-high text-on-surface-variant text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">Concept</span>
+</div>
+<h4 class="font-headline text-2xl mb-1 group-hover:text-primary transition-colors">Urban Architecture Walk</h4>
+<div class="space-y-4">
+<!-- P0 Progress -->
+<div>
+<div class="flex justify-between items-center mb-1.5">
+<label class="text-[11px] font-bold text-tertiary uppercase tracking-tighter flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="priority_high">priority_high</span>
+                                        Critical Essentials (P0)
+                                    </label>
+<span class="text-[11px] font-bold text-tertiary">0/4</span>
+</div>
+<div class="w-full h-1.5 bg-tertiary-fixed rounded-full overflow-hidden">
+<div class="h-full bg-tertiary rounded-full" style="width: 0%;"></div>
+</div>
+</div>
+<!-- Total Progress -->
+<div>
+<div class="flex justify-between items-center mb-1.5">
+<label class="text-[11px] font-bold text-on-surface-variant uppercase tracking-tighter">Total Preparation</label>
+<span class="text-[11px] font-bold text-on-surface">1/12</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 8%;"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="w-full md:w-48 h-32 rounded-lg overflow-hidden shrink-0">
+<img alt="Architecture" class="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-300" data-alt="Modern geometric skyscraper facade with reflective blue glass and sharp architectural lines against a clear sky" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB1oQnOAOlmJQERvQyWZ1tDZiYPUOH_ygtZzPr8HYGjyrubXVfIp3JDwiwPWW_4PhcWbeqKj8F88h_k9HDuhW3I11iXHcKO_lEFD7hjupdHR9tZMidOwrHWHzd4RsoV4whe_0JKx82uNWC-dgb20MTAg8I70gO8e-yyiN9xcPbic75caljP9a2PuRHBecITyHO25G72x4RY9luI4uhheza-f3Nki6Dx10x66o6xCusRLmDv1ObpxR9_DHWWoddZ3gE6o_mTBABK3C0"/>
+</div>
+</div>
+</div>
+</div>
+<!-- Floating Action Button - Contextual to Home -->
+<button class="fixed bottom-24 right-6 w-14 h-14 bg-primary text-on-primary rounded-full shadow-[0_8px_32px_rgba(0,88,188,0.3)] flex items-center justify-center active:scale-90 transition-transform duration-200 z-50">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">add</span>
+</button>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 bg-[#faf9fe]/80 dark:bg-[#1a1b1f]/80 backdrop-blur-xl border-t border-[#717786]/15 shadow-[0_-4px_24px_rgba(26,27,31,0.06)] flex justify-around items-center px-4 pt-3 pb-8">
+<!-- Trips (Active) -->
+<a class="flex flex-col items-center justify-center text-[#0058bc] dark:text-[#adc6ff] font-bold hover:text-[#0058bc] transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="explore" style="font-variation-settings: 'FILL' 1;">explore</span>
+<span class="font-inter text-[11px] font-medium mt-1">Trips</span>
+</a>
+<!-- Templates -->
+<a class="flex flex-col items-center justify-center text-[#717786] dark:text-[#9ea3af] hover:text-[#0058bc] transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="sticky_note_2">sticky_note_2</span>
+<span class="font-inter text-[11px] font-medium mt-1">Templates</span>
+</a>
+<!-- Settings -->
+<a class="flex flex-col items-center justify-center text-[#717786] dark:text-[#9ea3af] hover:text-[#0058bc] transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-inter text-[11px] font-medium mt-1">Settings</span>
+</a>
+</nav>
+</body></html>

@@ -21,7 +21,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let window = UIWindow(windowScene: windowScene)
         self.window = window
         
-        let listVC = ListViewController()
+        let listVC = TripsViewController2()
         let navigationController = UINavigationController(rootViewController: listVC)
         
         window.rootViewController = navigationController
