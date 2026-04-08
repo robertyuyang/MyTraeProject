@@ -28,7 +28,7 @@ enum Priority: Int, Codable, CaseIterable {
     }
 }
 
-struct TravelItem: Codable, Equatable {
+struct TripItem: Codable, Equatable {
     let id: UUID
     var name: String
     var priority: Priority
@@ -42,10 +42,10 @@ struct TravelItem: Codable, Equatable {
     }
 }
 
-struct TravelList: Codable, Equatable {
+struct Trip: Codable, Equatable {
     let id: UUID
     var name: String
-    var items: [TravelItem]
+    var items: [TripItem]
     var imageUrl: String?
     
     init(name: String) {
@@ -60,21 +60,21 @@ class DataManager {
     static let shared = DataManager()
     
     private let userDefaults = UserDefaults.standard
-    private let listsKey = "travelLists"
+    private let tripsKey = "trips"
     
     private init() {}
     
-    func loadLists() -> [TravelList] {
-        guard let data = userDefaults.data(forKey: listsKey),
-              let lists = try? JSONDecoder().decode([TravelList].self, from: data) else {
+    func loadTrips() -> [Trip] {
+        guard let data = userDefaults.data(forKey: tripsKey),
+              let trips = try? JSONDecoder().decode([Trip].self, from: data) else {
             return []
         }
-        return lists
+        return trips
     }
     
-    func saveLists(_ lists: [TravelList]) {
-        if let data = try? JSONEncoder().encode(lists) {
-            userDefaults.set(data, forKey: listsKey)
+    func saveTrips(_ trips: [Trip]) {
+        if let data = try? JSONEncoder().encode(trips) {
+            userDefaults.set(data, forKey: tripsKey)
         }
     }
 }

@@ -9,51 +9,24 @@ import UIKit
 
 class TripsViewController2: UIViewController {
     
-    private var trips: [Trip] = []
     private let tableView = UITableView()
-    
-    // 数据模型
-    struct Trip {
-        let id: UUID
-        let name: String
-        let status: TripStatus
-        let p0Progress: (checked: Int, total: Int)
-        let totalProgress: (checked: Int, total: Int)
-        let imageUrl: String?
-    }
-    
-    enum TripStatus: String {
-        case urgent = "URGENT"
-        case planning = "PLANNING"
-        case concept = "CONCEPT"
-        
-        var color: UIColor {
-            switch self {
-            case .urgent:
-                return UIColor(red: 255/255, green: 59/255, blue: 48/255, alpha: 1.0) // systemRed
-            case .planning:
-                return UIColor(red: 255/255, green: 149/255, blue: 0/255, alpha: 1.0) // systemOrange
-            case .concept:
-                return UIColor(red: 142/255, green: 142/255, blue: 147/255, alpha: 1.0) // systemGray
-            }
-        }
-        
-        var backgroundColor: UIColor {
-            switch self {
-            case .urgent:
-                return UIColor(red: 255/255, green: 242/255, blue: 242/255, alpha: 1.0)
-            case .planning:
-                return UIColor(red: 255/255, green: 248/255, blue: 240/255, alpha: 1.0)
-            case .concept:
-                return UIColor(red: 242/255, green: 242/255, blue: 247/255, alpha: 1.0)
-            }
-        }
-    }
+    private let viewModel = TripViewModel()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        loadSampleData()
+        setupViewModel()
+        viewModel.loadData()
+    }
+    
+    private func setupViewModel() {
+        viewModel.reloadData = { [weak self] in
+            self?.tableView.reloadData()
+        }
+        
+        viewModel.reloadRow = { [weak self] index in
+            self?.tableView.reloadRows(at: [IndexPath(row: 0, section: index)], with: .automatic)
+        }
     }
     
     private func setupUI() {
@@ -241,38 +214,6 @@ class TripsViewController2: UIViewController {
         ])
     }
     
-    private func loadSampleData() {
-        // 加载示例数据
-        trips = [
-            Trip(
-                id: UUID(),
-                name: "Coastal Highway Expedition",
-                status: .urgent,
-                p0Progress: (4, 5),
-                totalProgress: (12, 28),
-                imageUrl: "https://images.unsplash.com/photo-1506929562872-bb421503ef21?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
-            ),
-            Trip(
-                id: UUID(),
-                name: "Wine Country Retreat",
-                status: .planning,
-                p0Progress: (2, 6),
-                totalProgress: (5, 15),
-                imageUrl: "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
-            ),
-            Trip(
-                id: UUID(),
-                name: "Urban Architecture Walk",
-                status: .concept,
-                p0Progress: (0, 4),
-                totalProgress: (1, 12),
-                imageUrl: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
-            )
-        ]
-        
-        tableView.reloadData()
-    }
-    
     @objc private func createNewTrip() {
         // 实现创建新旅行的逻辑
         let alert = UIAlertController(title: "Create New Trip", message: "Enter trip name", preferredStyle: .alert)
@@ -283,17 +224,7 @@ class TripsViewController2: UIViewController {
         let confirmAction = UIAlertAction(title: "Create", style: .default) { [weak self] _ in
             guard let self = self, let tripName = alert.textFields?.first?.text, !tripName.isEmpty else { return }
             
-            let newTrip = Trip(
-                id: UUID(),
-                name: tripName,
-                status: .concept,
-                p0Progress: (0, 0),
-                totalProgress: (0, 0),
-                imageUrl: nil
-            )
-            
-            self.trips.append(newTrip)
-            self.tableView.reloadData()
+            self.viewModel.createNewTrip(name: tripName) {}
         }
         
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
@@ -308,7 +239,7 @@ class TripsViewController2: UIViewController {
 
 extension TripsViewController2: UITableViewDataSource, UITableViewDelegate {
     func numberOfSections(in tableView: UITableView) -> Int {
-        return trips.count
+        return viewModel.numberOfTrips()
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -317,8 +248,8 @@ extension TripsViewController2: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "TripCell", for: indexPath) as! TripCell
-        let trip = trips[indexPath.section]
-        cell.configure(trip: trip)
+        let trip = viewModel.trip(at: indexPath.section)
+        cell.configure(trip: trip, viewModel: viewModel)
         return cell
     }
     
@@ -351,8 +282,20 @@ extension TripsViewController2: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         // 实现点击卡片的逻辑
-        let trip = trips[indexPath.section]
-        print("Selected trip: \(trip.name)")
+        let trip = viewModel.trip(at: indexPath.section)
+        let detailVC = DetailViewController()
+        detailVC.trip = trip
+        detailVC.index = indexPath.section
+        detailVC.delegate = self
+        navigationController?.pushViewController(detailVC, animated: true)
+    }
+}
+
+// MARK: - DetailViewControllerDelegate
+
+extension TripsViewController2: DetailViewControllerDelegate {
+    func detailViewController(_ controller: DetailViewController, didUpdateTrip trip: Trip, at index: Int) {
+        viewModel.updateTrip(trip, at: index)
     }
 }
 
@@ -523,14 +466,19 @@ class TripCell: UITableViewCell {
         ])
     }
     
-    func configure(trip: TripsViewController2.Trip) {
+    func configure(trip: Trip, viewModel: TripViewModel) {
         // 设置名称
         nameLabel.text = trip.name
         
+        // 计算进度和状态
+        let p0Progress = viewModel.p0Progress(for: trip)
+        let totalProgress = viewModel.totalProgress(for: trip)
+        let status = viewModel.getTripStatus(for: trip)
+        
         // 设置状态标签
-        statusLabel.text = trip.status.rawValue
-        statusLabel.textColor = trip.status.color
-        statusLabel.backgroundColor = trip.status.backgroundColor
+        statusLabel.text = status.rawValue
+        statusLabel.textColor = status.color
+        statusLabel.backgroundColor = status.backgroundColor
         statusLabel.layer.cornerRadius = 3
         statusLabel.clipsToBounds = true
         statusLabel.textAlignment = .center
@@ -540,15 +488,13 @@ class TripCell: UITableViewCell {
         
         // 设置P0进度
         p0ProgressLabel.text = "Critical Essentials (P0)"
-        p0ProgressTextLabel.text = "\(trip.p0Progress.checked)/\(trip.p0Progress.total)"
-        let p0Percentage = trip.p0Progress.total > 0 ? Double(trip.p0Progress.checked) / Double(trip.p0Progress.total) : 0
-        p0ProgressBar.progress = Float(p0Percentage)
+        p0ProgressTextLabel.text = "\(p0Progress.checked)/\(p0Progress.total)"
+        p0ProgressBar.progress = Float(p0Progress.percentage)
         
         // 设置总进度
         totalProgressLabel.text = "Total Preparation"
-        totalProgressTextLabel.text = "\(trip.totalProgress.checked)/\(trip.totalProgress.total)"
-        let totalPercentage = trip.totalProgress.total > 0 ? Double(trip.totalProgress.checked) / Double(trip.totalProgress.total) : 0
-        totalProgressBar.progress = Float(totalPercentage)
+        totalProgressTextLabel.text = "\(totalProgress.checked)/\(totalProgress.total)"
+        totalProgressBar.progress = Float(totalProgress.percentage)
         
         // 加载图片
         if let imageUrl = trip.imageUrl, let url = URL(string: imageUrl) {

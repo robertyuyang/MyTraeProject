@@ -1,0 +1,236 @@
+//
+//  TripViewModel.swift
+//  MyTraeProject
+//
+//  Created by ByteDance on 2026/4/8.
+//
+
+import Foundation
+import UIKit
+
+class TripViewModel {
+    private var trips: [Trip] = []
+    private let imageGenerator = AIImageGenerator()
+    
+    // 闭包用于通知视图控制器数据变化
+    var reloadData: (() -> Void)?
+    var reloadRow: ((Int) -> Void)?
+    
+    init() {
+        loadData()
+    }
+    
+    // 加载数据
+    func loadData() {
+        trips = DataManager.shared.loadTrips()
+        // 如果没有数据，加载示例数据
+        if trips.isEmpty {
+            loadSampleData()
+        }
+        reloadData?()
+        generateMissingImages()
+    }
+    
+    // 加载示例数据
+    func loadSampleData() {
+        // 创建示例旅行数据
+        var coastalTrip = Trip(name: "Coastal Highway Expedition")
+        coastalTrip.imageUrl = "https://images.unsplash.com/photo-1506929562872-bb421503ef21?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
+        
+        var wineTrip = Trip(name: "Wine Country Retreat")
+        wineTrip.imageUrl = "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
+        
+        var urbanTrip = Trip(name: "Urban Architecture Walk")
+        urbanTrip.imageUrl = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
+        
+        // 添加示例项目
+        // Coastal Highway Expedition
+        coastalTrip.items.append(TripItem(name: "1111Pack hiking boots", priority: .p0))
+        coastalTrip.items.append(TripItem(name: "Book beachfront accommodation", priority: .p0))
+        coastalTrip.items.append(TripItem(name: "Plan scenic route", priority: .p0))
+        coastalTrip.items.append(TripItem(name: "Pack swimsuit", priority: .p0))
+        coastalTrip.items.append(TripItem(name: "Check car rental", priority: .p0))
+        coastalTrip.items.append(TripItem(name: "Buy travel insurance", priority: .p1))
+        coastalTrip.items.append(TripItem(name: "Pack camera", priority: .p1))
+        coastalTrip.items.append(TripItem(name: "Research local restaurants", priority: .p2))
+        
+        // Wine Country Retreat
+        wineTrip.items.append(TripItem(name: "Book winery tours", priority: .p0))
+        wineTrip.items.append(TripItem(name: "Reserve boutique hotel", priority: .p0))
+        wineTrip.items.append(TripItem(name: "Pack comfortable shoes", priority: .p0))
+        wineTrip.items.append(TripItem(name: "Research wine varieties", priority: .p1))
+        wineTrip.items.append(TripItem(name: "Plan transportation", priority: .p1))
+        wineTrip.items.append(TripItem(name: "Buy wine tasting notebook", priority: .p2))
+        
+        // Urban Architecture Walk
+        urbanTrip.items.append(TripItem(name: "Research architectural landmarks", priority: .p0))
+        urbanTrip.items.append(TripItem(name: "Book central accommodation", priority: .p0))
+        urbanTrip.items.append(TripItem(name: "Plan walking routes", priority: .p0))
+        urbanTrip.items.append(TripItem(name: "Pack comfortable walking shoes", priority: .p0))
+        
+        // 标记一些项目为已完成
+        coastalTrip.items[0].isChecked = true
+        coastalTrip.items[1].isChecked = true
+        coastalTrip.items[2].isChecked = true
+        coastalTrip.items[3].isChecked = true
+        coastalTrip.items[6].isChecked = true
+        coastalTrip.items[7].isChecked = true
+        
+        wineTrip.items[0].isChecked = true
+        wineTrip.items[1].isChecked = true
+        
+        urbanTrip.items[0].isChecked = true
+        
+        // 添加到数组
+        trips = [coastalTrip, wineTrip, urbanTrip]
+        
+        // 保存到UserDefaults
+        saveData()
+    }
+    
+    // 生成缺失的图片
+    func generateMissingImages() {
+        for (index, trip) in trips.enumerated() {
+            if trip.imageUrl == nil {
+                let prompt = "横版风景照片，与'\(trip.name)'相关的旅行场景，高清，真实感"
+                imageGenerator.generateImage(for: prompt) { [weak self] imageUrl, error in
+                    guard let self = self, let imageUrl = imageUrl else { return }
+                    
+                    DispatchQueue.main.async {
+                        // 更新列表中的图片URL
+                        self.trips[index].imageUrl = imageUrl
+                        self.saveData()
+                        // 只更新当前这一行
+                        self.reloadRow?(index)
+                    }
+                }
+            }
+        }
+    }
+    
+    // 保存数据
+    func saveData() {
+        DataManager.shared.saveTrips(trips)
+    }
+    
+    // 创建新旅行
+    func createNewTrip(name: String, completion: @escaping () -> Void) {
+        var newTrip = Trip(name: name)
+        
+        // 生成与旅行名称相关的图片
+        let prompt = "横版风景照片，与'\(name)'相关的旅行场景，高清，真实感"
+        imageGenerator.generateImage(for: prompt) { [weak self] imageUrl, error in
+            DispatchQueue.main.async {
+                if let imageUrl = imageUrl {
+                    newTrip.imageUrl = imageUrl
+                }
+                self?.trips.append(newTrip)
+                self?.saveData()
+                self?.reloadData?()
+                completion()
+            }
+        }
+    }
+    
+    // 删除旅行
+    func deleteTrip(at index: Int) {
+        trips.remove(at: index)
+        saveData()
+        reloadData?()
+    }
+    
+    // 重命名旅行
+    func renameTrip(at index: Int, newName: String) {
+        trips[index].name = newName
+        saveData()
+        reloadRow?(index)
+    }
+    
+    // 复制旅行
+    func copyTrip(at index: Int) {
+        let originalTrip = trips[index]
+        var copiedTrip = Trip(name: originalTrip.name + " (副本)")
+        copiedTrip.items = originalTrip.items
+        copiedTrip.imageUrl = originalTrip.imageUrl
+        trips.insert(copiedTrip, at: index + 1)
+        saveData()
+        reloadData?()
+    }
+    
+    // 获取旅行数量
+    func numberOfTrips() -> Int {
+        return trips.count
+    }
+    
+    // 获取指定位置的旅行
+    func trip(at index: Int) -> Trip {
+        return trips[index]
+    }
+    
+    // 更新旅行
+    func updateTrip(_ trip: Trip, at index: Int) {
+        trips[index] = trip
+        saveData()
+        reloadRow?(index)
+    }
+    
+    // 计算某个清单的P0进度
+    func p0Progress(for trip: Trip) -> (checked: Int, total: Int, percentage: Double) {
+        let p0Items = trip.items.filter { $0.priority == .p0 }
+        let checkedCount = p0Items.filter { $0.isChecked }.count
+        let totalCount = p0Items.count
+        let percentage = totalCount > 0 ? Double(checkedCount) / Double(totalCount) : 0
+        return (checkedCount, totalCount, percentage)
+    }
+    
+    // 计算总进度
+    func totalProgress(for trip: Trip) -> (checked: Int, total: Int, percentage: Double) {
+        let checkedCount = trip.items.filter { $0.isChecked }.count
+        let totalCount = trip.items.count
+        let percentage = totalCount > 0 ? Double(checkedCount) / Double(totalCount) : 0
+        return (checkedCount, totalCount, percentage)
+    }
+    
+    // 获取旅行状态
+    func getTripStatus(for trip: Trip) -> TripStatus {
+        let p0Progress = self.p0Progress(for: trip)
+        let totalProgress = self.totalProgress(for: trip)
+        
+        if p0Progress.percentage < 1.0 && totalProgress.percentage > 0 {
+            return .urgent
+        } else if totalProgress.percentage > 0 && totalProgress.percentage < 1.0 {
+            return .planning
+        } else {
+            return .concept
+        }
+    }
+    
+    // 旅行状态枚举
+    enum TripStatus: String {
+        case urgent = "URGENT"
+        case planning = "PLANNING"
+        case concept = "CONCEPT"
+        
+        var color: UIColor {
+            switch self {
+            case .urgent:
+                return UIColor(red: 255/255, green: 59/255, blue: 48/255, alpha: 1.0) // systemRed
+            case .planning:
+                return UIColor(red: 255/255, green: 149/255, blue: 0/255, alpha: 1.0) // systemOrange
+            case .concept:
+                return UIColor(red: 142/255, green: 142/255, blue: 147/255, alpha: 1.0) // systemGray
+            }
+        }
+        
+        var backgroundColor: UIColor {
+            switch self {
+            case .urgent:
+                return UIColor(red: 255/255, green: 242/255, blue: 242/255, alpha: 1.0)
+            case .planning:
+                return UIColor(red: 255/255, green: 248/255, blue: 240/255, alpha: 1.0)
+            case .concept:
+                return UIColor(red: 242/255, green: 242/255, blue: 247/255, alpha: 1.0)
+            }
+        }
+    }
+}

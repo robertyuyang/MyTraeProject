@@ -7,13 +7,13 @@
 import UIKit
 
 protocol DetailViewControllerDelegate: AnyObject {
-    func detailViewController(_ controller: DetailViewController, didUpdateList list: TravelList, at index: Int)
+    func detailViewController(_ controller: DetailViewController, didUpdateTrip trip: Trip, at index: Int)
 }
 
 class DetailViewController: UIViewController {
     
     weak var delegate: DetailViewControllerDelegate?
-    var travelList: TravelList!
+    var trip: Trip!
     var index: Int!
     
     private let stackView = UIStackView()
@@ -29,7 +29,7 @@ class DetailViewController: UIViewController {
     }
     
     private func setupUI() {
-        title = travelList.name
+        title = trip.name
         view.backgroundColor = .systemBackground
         
         navigationItem.rightBarButtonItem = UIBarButtonItem(
@@ -74,7 +74,7 @@ class DetailViewController: UIViewController {
     }
     
     private func updateProgress() {
-        let items = travelList.items
+        let items = trip.items
         
         for priority in Priority.allCases {
             let priorityItems = items.filter { $0.priority == priority }
@@ -99,7 +99,7 @@ class DetailViewController: UIViewController {
     private func saveAndUpdate() {
         updateProgress()
         tableView.reloadData()
-        delegate?.detailViewController(self, didUpdateList: travelList, at: index)
+        delegate?.detailViewController(self, didUpdateTrip: trip, at: index)
     }
     
     @objc private func addNewItem() {
@@ -123,8 +123,8 @@ class DetailViewController: UIViewController {
         
         let confirmAction = UIAlertAction(title: "确定", style: .default) { [weak self] _ in
             guard let self = self, let name = alert.textFields?.first?.text, !name.isEmpty else { return }
-            let newItem = TravelItem(name: name, priority: priority)
-            self.travelList.items.append(newItem)
+            let newItem = TripItem(name: name, priority: priority)
+            self.trip.items.append(newItem)
             self.saveAndUpdate()
         }
         
@@ -136,26 +136,26 @@ class DetailViewController: UIViewController {
 
 extension DetailViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return travelList.items.count
+        return trip.items.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "ItemCell", for: indexPath) as! ItemCell
-        let item = travelList.items[indexPath.row]
+        let item = trip.items[indexPath.row]
         cell.configure(with: item)
         return cell
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        travelList.items[indexPath.row].isChecked.toggle()
+        trip.items[indexPath.row].isChecked.toggle()
         saveAndUpdate()
     }
     
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let deleteAction = UIContextualAction(style: .destructive, title: "删除") { [weak self] (_, _, completion) in
             guard let self = self else { return }
-            self.travelList.items.remove(at: indexPath.row)
+            self.trip.items.remove(at: indexPath.row)
             self.saveAndUpdate()
             tableView.deleteRows(at: [indexPath], with: .automatic)
             completion(true)
@@ -275,7 +275,7 @@ class ItemCell: UITableViewCell {
         ])
     }
     
-    func configure(with item: TravelItem) {
+    func configure(with item: TripItem) {
         priorityBadge.text = item.priority.title
         priorityBadge.backgroundColor = item.priority.color
         nameLabel.text = item.name

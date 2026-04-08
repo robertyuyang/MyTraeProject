@@ -9,12 +9,12 @@ import UIKit
 
 class TripsViewController: UIViewController {
     
-    private var lists: [TravelList] = []
+    private var lists: [Trip] = []
     private let tableView = UITableView()
     private let imageGenerator = AIImageGenerator()
     
     // 辅助方法：计算某个清单的P0进度
-    private func p0Progress(for list: TravelList) -> (checked: Int, total: Int, percentage: Double) {
+    private func p0Progress(for list: Trip) -> (checked: Int, total: Int, percentage: Double) {
         let p0Items = list.items.filter { $0.priority == .p0 }
         let checkedCount = p0Items.filter { $0.isChecked }.count
         let totalCount = p0Items.count
@@ -23,7 +23,7 @@ class TripsViewController: UIViewController {
     }
     
     // 辅助方法：计算总进度
-    private func totalProgress(for list: TravelList) -> (checked: Int, total: Int, percentage: Double) {
+    private func totalProgress(for list: Trip) -> (checked: Int, total: Int, percentage: Double) {
         let checkedCount = list.items.filter { $0.isChecked }.count
         let totalCount = list.items.count
         let percentage = totalCount > 0 ? Double(checkedCount) / Double(totalCount) : 0
@@ -31,7 +31,7 @@ class TripsViewController: UIViewController {
     }
     
     // 辅助方法：获取旅行状态
-    private func getTripStatus(for list: TravelList) -> String {
+    private func getTripStatus(for list: Trip) -> String {
         let p0Progress = self.p0Progress(for: list)
         let totalProgress = self.totalProgress(for: list)
         
@@ -152,7 +152,7 @@ class TripsViewController: UIViewController {
     }
     
     private func loadData() {
-        lists = DataManager.shared.loadLists()
+        lists = DataManager.shared.loadTrips()
         tableView.reloadData()
         
         // 为没有图片的清单生成图片
@@ -179,13 +179,13 @@ class TripsViewController: UIViewController {
     }
     
     private func saveData() {
-        DataManager.shared.saveLists(lists)
+        DataManager.shared.saveTrips(lists)
     }
     
     @objc private func createNewList() {
         showNameAlert(title: "创建新清单", message: "请输入清单名称") { [weak self] name in
             guard let self = self, !name.isEmpty else { return }
-            var newList = TravelList(name: name)
+            var newList = Trip(name: name)
             
             // 生成与清单名称相关的图片
             let prompt = "横版风景照片，与'\(name)'相关的旅行场景，高清，真实感"
@@ -238,7 +238,7 @@ extension TripsViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         let detailVC = DetailViewController()
-        detailVC.travelList = lists[indexPath.row]
+        //detailVC.travelList = lists[indexPath.row]
         detailVC.index = indexPath.row
         detailVC.delegate = self
         navigationController?.pushViewController(detailVC, animated: true)
@@ -271,8 +271,9 @@ extension TripsViewController: UITableViewDataSource, UITableViewDelegate {
         let copyAction = UIContextualAction(style: .normal, title: "复制") { [weak self] (_, _, completion) in
             guard let self = self else { return }
             let originalList = self.lists[indexPath.row]
-            var copiedList = TravelList(name: originalList.name + " (副本)")
+            var copiedList = Trip(name: originalList.name + " (副本)")
             copiedList.items = originalList.items
+            copiedList.imageUrl = originalList.imageUrl
             self.lists.insert(copiedList, at: indexPath.row + 1)
             self.saveData()
             self.tableView.insertRows(at: [IndexPath(row: indexPath.row + 1, section: 0)], with: .automatic)
@@ -285,8 +286,8 @@ extension TripsViewController: UITableViewDataSource, UITableViewDelegate {
 }
 
 extension TripsViewController: DetailViewControllerDelegate {
-    func detailViewController(_ controller: DetailViewController, didUpdateList list: TravelList, at index: Int) {
-        lists[index] = list
+    func detailViewController(_ controller: DetailViewController, didUpdateTrip trip: Trip, at index: Int) {
+        lists[index] = trip
         saveData()
         tableView.reloadRows(at: [IndexPath(row: index, section: 0)], with: .automatic)
     }
