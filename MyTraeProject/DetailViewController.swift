@@ -24,6 +24,8 @@ class DetailViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        // 确保导航栏可见
+        navigationController?.setNavigationBarHidden(false, animated: false)
         setupUI()
         updateProgress()
     }
@@ -31,6 +33,12 @@ class DetailViewController: UIViewController {
     private func setupUI() {
         title = trip.name
         view.backgroundColor = .systemBackground
+        
+        navigationItem.leftBarButtonItem = UIBarButtonItem(
+            barButtonSystemItem: .close,
+            target: self,
+            action: #selector(closeDetailView)
+        )
         
         navigationItem.rightBarButtonItem = UIBarButtonItem(
             barButtonSystemItem: .add,
@@ -131,6 +139,10 @@ class DetailViewController: UIViewController {
         alert.addAction(confirmAction)
         alert.addAction(UIAlertAction(title: "取消", style: .cancel))
         present(alert, animated: true)
+    }
+    
+    @objc private func closeDetailView() {
+        navigationController?.popViewController(animated: true)
     }
 }
 
