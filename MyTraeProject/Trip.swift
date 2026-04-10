@@ -28,16 +28,30 @@ enum Priority: Int, Codable, CaseIterable {
     }
 }
 
+enum Category: String, Codable, CaseIterable {
+    case electronics = "Electronics"
+    case documents = "Documents"
+    case clothing = "Clothing"
+    case toiletries = "Toiletries"
+    case other = "Other"
+    
+    var title: String {
+        return rawValue
+    }
+}
+
 struct TripItem: Codable, Equatable {
     let id: UUID
     var name: String
     var priority: Priority
+    var category: Category
     var isChecked: Bool
     
-    init(name: String, priority: Priority) {
+    init(name: String, priority: Priority, category: Category = .other) {
         self.id = UUID()
         self.name = name
         self.priority = priority
+        self.category = category
         self.isChecked = false
     }
 }

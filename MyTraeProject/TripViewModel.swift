@@ -45,28 +45,28 @@ class TripViewModel {
         
         // 添加示例项目
         // 沿海公路探险
-        coastalTrip.items.append(TripItem(name: "打包徒步靴", priority: .p0))
-        coastalTrip.items.append(TripItem(name: "预订海滨住宿", priority: .p0))
-        coastalTrip.items.append(TripItem(name: "规划风景路线", priority: .p0))
-        coastalTrip.items.append(TripItem(name: "打包泳衣", priority: .p0))
-        coastalTrip.items.append(TripItem(name: "检查汽车租赁", priority: .p0))
-        coastalTrip.items.append(TripItem(name: "购买旅行保险", priority: .p1))
-        coastalTrip.items.append(TripItem(name: "打包相机", priority: .p1))
-        coastalTrip.items.append(TripItem(name: "研究当地餐馆", priority: .p2))
+        coastalTrip.items.append(TripItem(name: "打包徒步靴", priority: .p0, category: .clothing))
+        coastalTrip.items.append(TripItem(name: "预订海滨住宿", priority: .p0, category: .other))
+        coastalTrip.items.append(TripItem(name: "规划风景路线", priority: .p0, category: .other))
+        coastalTrip.items.append(TripItem(name: "打包泳衣", priority: .p0, category: .clothing))
+        coastalTrip.items.append(TripItem(name: "检查汽车租赁", priority: .p0, category: .other))
+        coastalTrip.items.append(TripItem(name: "购买旅行保险", priority: .p1, category: .other))
+        coastalTrip.items.append(TripItem(name: "打包相机", priority: .p1, category: .electronics))
+        coastalTrip.items.append(TripItem(name: "研究当地餐馆", priority: .p2, category: .other))
         
         // 葡萄酒乡 retreat
-        wineTrip.items.append(TripItem(name: "预订酒庄之旅", priority: .p0))
-        wineTrip.items.append(TripItem(name: "预订精品酒店", priority: .p0))
-        wineTrip.items.append(TripItem(name: "打包舒适鞋子", priority: .p0))
-        wineTrip.items.append(TripItem(name: "研究葡萄酒品种", priority: .p1))
-        wineTrip.items.append(TripItem(name: "规划交通", priority: .p1))
-        wineTrip.items.append(TripItem(name: "购买品酒笔记本", priority: .p2))
+        wineTrip.items.append(TripItem(name: "预订酒庄之旅", priority: .p0, category: .other))
+        wineTrip.items.append(TripItem(name: "预订精品酒店", priority: .p0, category: .other))
+        wineTrip.items.append(TripItem(name: "打包舒适鞋子", priority: .p0, category: .clothing))
+        wineTrip.items.append(TripItem(name: "研究葡萄酒品种", priority: .p1, category: .other))
+        wineTrip.items.append(TripItem(name: "规划交通", priority: .p1, category: .other))
+        wineTrip.items.append(TripItem(name: "购买品酒笔记本", priority: .p2, category: .other))
         
         // 城市建筑漫步
-        urbanTrip.items.append(TripItem(name: "研究建筑地标", priority: .p0))
-        urbanTrip.items.append(TripItem(name: "预订市中心住宿", priority: .p0))
-        urbanTrip.items.append(TripItem(name: "规划步行路线", priority: .p0))
-        urbanTrip.items.append(TripItem(name: "打包舒适步行鞋", priority: .p0))
+        urbanTrip.items.append(TripItem(name: "研究建筑地标", priority: .p0, category: .other))
+        urbanTrip.items.append(TripItem(name: "预订市中心住宿", priority: .p0, category: .other))
+        urbanTrip.items.append(TripItem(name: "规划步行路线", priority: .p0, category: .other))
+        urbanTrip.items.append(TripItem(name: "打包舒适步行鞋", priority: .p0, category: .clothing))
         
         // 标记一些项目为已完成
         coastalTrip.items[0].isChecked = true

@@ -21,6 +21,11 @@ class DetailViewController: UIViewController {
     private let p1ProgressView = ProgressView()
     private let p2ProgressView = ProgressView()
     private let tableView = UITableView()
+    private let stickyHeaderView = UIView()
+    private let adventureReadyLabel = UILabel()
+    private let tokyoExpeditionLabel = UILabel()
+    private let bottomNavBar = UIView()
+    private let floatingActionButton = UIButton(type: .system)
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -31,53 +36,154 @@ class DetailViewController: UIViewController {
     }
     
     private func setupUI() {
-        title = trip.name
+        title = "The Editorial Traveler"
         view.backgroundColor = .systemBackground
         
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            barButtonSystemItem: .close,
-            target: self,
-            action: #selector(closeDetailView)
-        )
+        // 自定义导航栏样式
+        navigationController?.navigationBar.backgroundColor = .systemBackground
+        navigationController?.navigationBar.shadowImage = UIImage()
+        navigationController?.navigationBar.isTranslucent = false
         
-        navigationItem.rightBarButtonItem = UIBarButtonItem(
-            barButtonSystemItem: .add,
-            target: self,
-            action: #selector(addNewItem)
-        )
+        // 添加返回按钮
+        let backButton = UIButton(type: .system)
+        backButton.setImage(UIImage(systemName: "arrow.left"), for: .normal)
+        backButton.tintColor = .black
+        backButton.addTarget(self, action: #selector(closeDetailView), for: .touchUpInside)
+        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: backButton)
+        
+        // 设置粘性头部
+        stickyHeaderView.backgroundColor = UIColor(red: 249/255, green: 249/255, blue: 249/255, alpha: 1.0)
+        stickyHeaderView.layer.borderWidth = 1
+        stickyHeaderView.layer.borderColor = UIColor(red: 229/255, green: 229/255, blue: 229/255, alpha: 1.0).cgColor
+        stickyHeaderView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(stickyHeaderView)
+        
+        // Adventure Ready 标签
+        adventureReadyLabel.text = "Adventure Ready"
+        adventureReadyLabel.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+        adventureReadyLabel.textColor = .black
+        adventureReadyLabel.translatesAutoresizingMaskIntoConstraints = false
+        stickyHeaderView.addSubview(adventureReadyLabel)
+        
+        // Tokyo Expedition 标签
+        tokyoExpeditionLabel.text = "Tokyo Expedition"
+        tokyoExpeditionLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+        tokyoExpeditionLabel.textColor = UIColor(red: 33/255, green: 33/255, blue: 33/255, alpha: 1.0)
+        tokyoExpeditionLabel.translatesAutoresizingMaskIntoConstraints = false
+        stickyHeaderView.addSubview(tokyoExpeditionLabel)
         
         stackView.axis = .vertical
         stackView.spacing = 12
         stackView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(stackView)
         
-        p0ProgressView.title = "P0"
-        p0ProgressView.color = Priority.p0.color
+        // P0 Essentials (Dominant)
+        p0ProgressView.title = "P0 Essentials"
+        p0ProgressView.subtitle = "85%"
+        p0ProgressView.color = UIColor(red: 255/255, green: 99/255, blue: 71/255, alpha: 1.0) // 红色
+        p0ProgressView.isDominant = true
+        p0ProgressView.progress = 0.85
         stackView.addArrangedSubview(p0ProgressView)
         
-        p1ProgressView.title = "P1"
-        p1ProgressView.color = Priority.p1.color
+        // Core (P0+P1) (Secondary)
+        p1ProgressView.title = "Core (P0+P1)"
+        p1ProgressView.subtitle = "62%"
+        p1ProgressView.color = UIColor(red: 238/255, green: 238/255, blue: 238/255, alpha: 1.0) // 灰色
+        p1ProgressView.progress = 0.62
         stackView.addArrangedSubview(p1ProgressView)
         
-        p2ProgressView.title = "P2"
-        p2ProgressView.color = Priority.p2.color
+        // All Items (Secondary)
+        p2ProgressView.title = "All Items"
+        p2ProgressView.subtitle = "48%"
+        p2ProgressView.color = UIColor(red: 238/255, green: 238/255, blue: 238/255, alpha: 1.0) // 灰色
+        p2ProgressView.progress = 0.48
         stackView.addArrangedSubview(p2ProgressView)
         
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.register(ItemCell.self, forCellReuseIdentifier: "ItemCell")
         tableView.delegate = self
         tableView.dataSource = self
+        tableView.separatorStyle = .none
+        tableView.backgroundColor = .systemBackground
         view.addSubview(tableView)
         
+        // 设置底部导航栏
+        bottomNavBar.backgroundColor = .white
+        bottomNavBar.layer.borderWidth = 1
+        bottomNavBar.layer.borderColor = UIColor(red: 229/255, green: 229/255, blue: 229/255, alpha: 1.0).cgColor
+        bottomNavBar.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(bottomNavBar)
+        
         NSLayoutConstraint.activate([
-            stackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
+            // 粘性头部约束
+            stickyHeaderView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            stickyHeaderView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            stickyHeaderView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            
+            // 粘性头部内部标签约束
+            adventureReadyLabel.topAnchor.constraint(equalTo: stickyHeaderView.topAnchor, constant: 16),
+            adventureReadyLabel.leadingAnchor.constraint(equalTo: stickyHeaderView.leadingAnchor, constant: 16),
+            
+            tokyoExpeditionLabel.topAnchor.constraint(equalTo: adventureReadyLabel.bottomAnchor, constant: 8),
+            tokyoExpeditionLabel.leadingAnchor.constraint(equalTo: stickyHeaderView.leadingAnchor, constant: 16),
+            tokyoExpeditionLabel.bottomAnchor.constraint(equalTo: stickyHeaderView.bottomAnchor, constant: -16),
+            
+            // 进度条区域约束
+            stackView.topAnchor.constraint(equalTo: stickyHeaderView.bottomAnchor, constant: 16),
             stackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             stackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             
+            // 表格视图约束
             tableView.topAnchor.constraint(equalTo: stackView.bottomAnchor, constant: 20),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            tableView.bottomAnchor.constraint(equalTo: bottomNavBar.topAnchor)
+        ])
+        
+        // 创建导航项
+        let tripsItem = createBottomNavItem(title: "Trips", isSelected: true)
+        let templatesItem = createBottomNavItem(title: "Templates", isSelected: false)
+        let settingsItem = createBottomNavItem(title: "Settings", isSelected: false)
+        
+        // 水平栈视图
+        let navStackView = UIStackView(arrangedSubviews: [tripsItem, templatesItem, settingsItem])
+        navStackView.axis = .horizontal
+        navStackView.distribution = .fillEqually
+        navStackView.translatesAutoresizingMaskIntoConstraints = false
+        bottomNavBar.addSubview(navStackView)
+        
+        // 底部导航栏约束
+        NSLayoutConstraint.activate([
+            bottomNavBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            bottomNavBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            bottomNavBar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            bottomNavBar.heightAnchor.constraint(equalToConstant: 60),
+            
+            navStackView.topAnchor.constraint(equalTo: bottomNavBar.topAnchor),
+            navStackView.leadingAnchor.constraint(equalTo: bottomNavBar.leadingAnchor),
+            navStackView.trailingAnchor.constraint(equalTo: bottomNavBar.trailingAnchor),
+            navStackView.bottomAnchor.constraint(equalTo: bottomNavBar.bottomAnchor)
+        ])
+        
+        // 设置浮动操作按钮
+        floatingActionButton.setImage(UIImage(systemName: "plus"), for: .normal)
+        floatingActionButton.tintColor = .white
+        floatingActionButton.backgroundColor = UIColor(red: 255/255, green: 99/255, blue: 71/255, alpha: 1.0) // 红色
+        floatingActionButton.layer.cornerRadius = 28
+        floatingActionButton.layer.shadowColor = UIColor.black.withAlphaComponent(0.3).cgColor
+        floatingActionButton.layer.shadowOffset = CGSize(width: 0, height: 4)
+        floatingActionButton.layer.shadowOpacity = 1
+        floatingActionButton.layer.shadowRadius = 8
+        floatingActionButton.translatesAutoresizingMaskIntoConstraints = false
+        floatingActionButton.addTarget(self, action: #selector(addNewItem), for: .touchUpInside)
+        view.addSubview(floatingActionButton)
+        
+        // 浮动操作按钮约束
+        NSLayoutConstraint.activate([
+            floatingActionButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            floatingActionButton.bottomAnchor.constraint(equalTo: bottomNavBar.topAnchor, constant: -20),
+            floatingActionButton.widthAnchor.constraint(equalToConstant: 56),
+            floatingActionButton.heightAnchor.constraint(equalToConstant: 56)
         ])
     }
     
@@ -113,9 +219,9 @@ class DetailViewController: UIViewController {
     @objc private func addNewItem() {
         let alert = UIAlertController(title: "添加物品", message: nil, preferredStyle: .actionSheet)
         
-        for priority in Priority.allCases {
-            alert.addAction(UIAlertAction(title: priority.title, style: .default) { [weak self] _ in
-                self?.showItemNameAlert(priority: priority)
+        for category in Category.allCases {
+            alert.addAction(UIAlertAction(title: category.title, style: .default) { [weak self] _ in
+                self?.showPrioritySelectionAlert(category: category)
             })
         }
         
@@ -123,15 +229,28 @@ class DetailViewController: UIViewController {
         present(alert, animated: true)
     }
     
-    private func showItemNameAlert(priority: Priority) {
-        let alert = UIAlertController(title: "输入物品名称", message: "优先级: \(priority.title)", preferredStyle: .alert)
+    private func showPrioritySelectionAlert(category: Category) {
+        let alert = UIAlertController(title: "选择优先级", message: "类别: \(category.title)", preferredStyle: .actionSheet)
+        
+        for priority in Priority.allCases {
+            alert.addAction(UIAlertAction(title: priority.title, style: .default) { [weak self] _ in
+                self?.showItemNameAlert(category: category, priority: priority)
+            })
+        }
+        
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+        present(alert, animated: true)
+    }
+    
+    private func showItemNameAlert(category: Category, priority: Priority) {
+        let alert = UIAlertController(title: "输入物品名称", message: "类别: \(category.title), 优先级: \(priority.title)", preferredStyle: .alert)
         alert.addTextField { textField in
             textField.placeholder = "物品名称"
         }
         
         let confirmAction = UIAlertAction(title: "确定", style: .default) { [weak self] _ in
             guard let self = self, let name = alert.textFields?.first?.text, !name.isEmpty else { return }
-            let newItem = TripItem(name: name, priority: priority)
+            let newItem = TripItem(name: name, priority: priority, category: category)
             self.trip.items.append(newItem)
             self.saveAndUpdate()
         }
@@ -144,32 +263,128 @@ class DetailViewController: UIViewController {
     @objc private func closeDetailView() {
         navigationController?.popViewController(animated: true)
     }
+    
+    private func createBottomNavItem(title: String, isSelected: Bool) -> UIView {
+        let containerView = UIView()
+        
+        // 图标
+        let imageView = UIImageView()
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        containerView.addSubview(imageView)
+        
+        // 标题
+        let titleLabel = UILabel()
+        titleLabel.text = title
+        titleLabel.font = .systemFont(ofSize: 12)
+        titleLabel.textColor = isSelected ? UIColor(red: 255/255, green: 99/255, blue: 71/255, alpha: 1.0) : UIColor(red: 117/255, green: 117/255, blue: 117/255, alpha: 1.0)
+        titleLabel.textAlignment = .center
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        containerView.addSubview(titleLabel)
+        
+        // 设置图标
+        switch title {
+        case "Trips":
+            imageView.image = UIImage(systemName: "suitcase")
+        case "Templates":
+            imageView.image = UIImage(systemName: "doc.text")
+        case "Settings":
+            imageView.image = UIImage(systemName: "gear")
+        default:
+            imageView.image = UIImage(systemName: "circle")
+        }
+        
+        imageView.tintColor = isSelected ? UIColor(red: 255/255, green: 99/255, blue: 71/255, alpha: 1.0) : UIColor(red: 117/255, green: 117/255, blue: 117/255, alpha: 1.0)
+        
+        NSLayoutConstraint.activate([
+            imageView.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 8),
+            imageView.centerXAnchor.constraint(equalTo: containerView.centerXAnchor),
+            imageView.widthAnchor.constraint(equalToConstant: 24),
+            imageView.heightAnchor.constraint(equalToConstant: 24),
+            
+            titleLabel.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 4),
+            titleLabel.centerXAnchor.constraint(equalTo: containerView.centerXAnchor),
+            titleLabel.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -8)
+        ])
+        
+        return containerView
+    }
 }
 
 extension DetailViewController: UITableViewDataSource, UITableViewDelegate {
+    // 按类别对物品进行分组
+    private var groupedItems: [Category: [TripItem]] {
+        return Dictionary(grouping: trip.items) { $0.category }
+    }
+    
+    // 获取所有类别，按特定顺序排序
+    private var sortedCategories: [Category] {
+        return [.electronics, .documents, .clothing, .toiletries, .other].filter { groupedItems[$0] != nil }
+    }
+    
+    func numberOfSections(in tableView: UITableView) -> Int {
+        return sortedCategories.count
+    }
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return trip.items.count
+        let category = sortedCategories[section]
+        return groupedItems[category]?.count ?? 0
+    }
+    
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let headerView = UIView()
+        headerView.backgroundColor = .systemBackground
+        
+        let titleLabel = UILabel()
+        titleLabel.text = sortedCategories[section].title
+        titleLabel.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
+        titleLabel.textColor = UIColor(red: 33/255, green: 33/255, blue: 33/255, alpha: 1.0)
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        headerView.addSubview(titleLabel)
+        
+        NSLayoutConstraint.activate([
+            titleLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 16),
+            titleLabel.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 16),
+            titleLabel.bottomAnchor.constraint(equalTo: headerView.bottomAnchor, constant: -8)
+        ])
+        
+        return headerView
+    }
+    
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return 44
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "ItemCell", for: indexPath) as! ItemCell
-        let item = trip.items[indexPath.row]
+        let category = sortedCategories[indexPath.section]
+        let items = groupedItems[category]!
+        let item = items[indexPath.row]
         cell.configure(with: item)
         return cell
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        trip.items[indexPath.row].isChecked.toggle()
-        saveAndUpdate()
+        let category = sortedCategories[indexPath.section]
+        let items = groupedItems[category]!
+        let item = items[indexPath.row]
+        if let index = trip.items.firstIndex(where: { $0.id == item.id }) {
+            trip.items[index].isChecked.toggle()
+            saveAndUpdate()
+        }
     }
     
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let deleteAction = UIContextualAction(style: .destructive, title: "删除") { [weak self] (_, _, completion) in
             guard let self = self else { return }
-            self.trip.items.remove(at: indexPath.row)
-            self.saveAndUpdate()
-            tableView.deleteRows(at: [indexPath], with: .automatic)
+            let category = self.sortedCategories[indexPath.section]
+            let items = self.groupedItems[category]!
+            let item = items[indexPath.row]
+            if let index = self.trip.items.firstIndex(where: { $0.id == item.id }) {
+                self.trip.items.remove(at: index)
+                self.saveAndUpdate()
+                tableView.deleteRows(at: [indexPath], with: .automatic)
+            }
             completion(true)
         }
         
@@ -187,11 +402,33 @@ class ProgressView: UIView {
     }
     
     var color: UIColor = .systemBlue {
-        didSet { progressBar.tintColor = color }
+        didSet {
+            progressBar.tintColor = color
+            if isDominant {
+                backgroundColor = color.withAlphaComponent(0.1)
+            }
+        }
     }
     
     var progress: Double = 0 {
         didSet { progressBar.progress = Float(progress) }
+    }
+    
+    var isDominant: Bool = false {
+        didSet {
+            if isDominant {
+                backgroundColor = color.withAlphaComponent(0.1)
+                layer.cornerRadius = 12
+                layer.shadowColor = UIColor.black.withAlphaComponent(0.1).cgColor
+                layer.shadowOffset = CGSize(width: 0, height: 2)
+                layer.shadowOpacity = 1
+                layer.shadowRadius = 4
+            } else {
+                backgroundColor = UIColor(red: 245/255, green: 245/255, blue: 245/255, alpha: 1.0)
+                layer.cornerRadius = 12
+                layer.shadowColor = nil
+            }
+        }
     }
     
     private let titleLabel = UILabel()
@@ -208,40 +445,51 @@ class ProgressView: UIView {
     }
     
     private func setupUI() {
+        // 设置基础样式
+        backgroundColor = UIColor(red: 245/255, green: 245/255, blue: 245/255, alpha: 1.0)
+        layer.cornerRadius = 12
+        
         let stack = UIStackView()
         stack.axis = .horizontal
         stack.translatesAutoresizingMaskIntoConstraints = false
         addSubview(stack)
         
         titleLabel.font = .systemFont(ofSize: 14, weight: .medium)
+        titleLabel.textColor = .black
         stack.addArrangedSubview(titleLabel)
         
         stack.addArrangedSubview(UIView())
         
-        subtitleLabel.font = .systemFont(ofSize: 12)
-        subtitleLabel.textColor = .secondaryLabel
+        subtitleLabel.font = .systemFont(ofSize: 14, weight: .bold)
+        subtitleLabel.textColor = UIColor(red: 33/255, green: 33/255, blue: 33/255, alpha: 1.0)
         stack.addArrangedSubview(subtitleLabel)
         
+        // 自定义进度条
         progressBar.translatesAutoresizingMaskIntoConstraints = false
+        progressBar.progressViewStyle = .default
+        progressBar.layer.cornerRadius = 4
+        progressBar.clipsToBounds = true
         addSubview(progressBar)
         
         NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: topAnchor),
-            stack.leadingAnchor.constraint(equalTo: leadingAnchor),
-            stack.trailingAnchor.constraint(equalTo: trailingAnchor),
+            stack.topAnchor.constraint(equalTo: topAnchor, constant: 12),
+            stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
+            stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -12),
             
             progressBar.topAnchor.constraint(equalTo: stack.bottomAnchor, constant: 8),
-            progressBar.leadingAnchor.constraint(equalTo: leadingAnchor),
-            progressBar.trailingAnchor.constraint(equalTo: trailingAnchor),
-            progressBar.bottomAnchor.constraint(equalTo: bottomAnchor),
+            progressBar.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
+            progressBar.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -12),
+            progressBar.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -12),
             progressBar.heightAnchor.constraint(equalToConstant: 8)
         ])
     }
 }
 
 class ItemCell: UITableViewCell {
+    private let containerView = UIView()
     private let priorityBadge = UILabel()
     private let nameLabel = UILabel()
+    private let descriptionLabel = UILabel()
     private let checkmarkImageView = UIImageView()
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -254,34 +502,72 @@ class ItemCell: UITableViewCell {
     }
     
     private func setupUI() {
+        // 容器视图
+        containerView.backgroundColor = UIColor(red: 255/255, green: 255/255, blue: 255/255, alpha: 1.0)
+        containerView.layer.borderWidth = 1
+        containerView.layer.borderColor = UIColor(red: 229/255, green: 229/255, blue: 229/255, alpha: 1.0).cgColor
+        containerView.layer.cornerRadius = 12
+        containerView.layer.shadowColor = UIColor.black.withAlphaComponent(0.1).cgColor
+        containerView.layer.shadowOffset = CGSize(width: 0, height: 2)
+        containerView.layer.shadowOpacity = 1
+        containerView.layer.shadowRadius = 4
+        containerView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(containerView)
+        
+        // 优先级标签
         priorityBadge.font = .systemFont(ofSize: 12, weight: .bold)
         priorityBadge.textColor = .white
         priorityBadge.textAlignment = .center
-        priorityBadge.layer.cornerRadius = 4
+        priorityBadge.layer.cornerRadius = 6
         priorityBadge.layer.masksToBounds = true
         priorityBadge.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addSubview(priorityBadge)
+        containerView.addSubview(priorityBadge)
         
-        nameLabel.font = .systemFont(ofSize: 16)
+        // 名称标签
+        nameLabel.font = .systemFont(ofSize: 16, weight: .medium)
+        nameLabel.textColor = UIColor(red: 33/255, green: 33/255, blue: 33/255, alpha: 1.0)
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addSubview(nameLabel)
+        containerView.addSubview(nameLabel)
         
+        // 描述标签
+        descriptionLabel.font = .systemFont(ofSize: 14)
+        descriptionLabel.textColor = UIColor(red: 117/255, green: 117/255, blue: 117/255, alpha: 1.0)
+        descriptionLabel.translatesAutoresizingMaskIntoConstraints = false
+        containerView.addSubview(descriptionLabel)
+        
+        // 勾选图标
         checkmarkImageView.image = UIImage(systemName: "checkmark.circle.fill")
         checkmarkImageView.tintColor = .systemGreen
         checkmarkImageView.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addSubview(checkmarkImageView)
+        containerView.addSubview(checkmarkImageView)
         
         NSLayoutConstraint.activate([
-            priorityBadge.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            priorityBadge.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            // 容器视图约束
+            containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
+            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8),
+            
+            // 优先级标签约束
+            priorityBadge.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 12),
+            priorityBadge.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
             priorityBadge.widthAnchor.constraint(equalToConstant: 36),
             priorityBadge.heightAnchor.constraint(equalToConstant: 24),
             
+            // 名称标签约束
             nameLabel.leadingAnchor.constraint(equalTo: priorityBadge.trailingAnchor, constant: 12),
-            nameLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            nameLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 12),
+            nameLabel.trailingAnchor.constraint(equalTo: checkmarkImageView.leadingAnchor, constant: -12),
             
-            checkmarkImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            checkmarkImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            // 描述标签约束
+            descriptionLabel.leadingAnchor.constraint(equalTo: priorityBadge.trailingAnchor, constant: 12),
+            descriptionLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 4),
+            descriptionLabel.trailingAnchor.constraint(equalTo: checkmarkImageView.leadingAnchor, constant: -12),
+            descriptionLabel.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -12),
+            
+            // 勾选图标约束
+            checkmarkImageView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -12),
+            checkmarkImageView.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
             checkmarkImageView.widthAnchor.constraint(equalToConstant: 24),
             checkmarkImageView.heightAnchor.constraint(equalToConstant: 24)
         ])
@@ -289,13 +575,31 @@ class ItemCell: UITableViewCell {
     
     func configure(with item: TripItem) {
         priorityBadge.text = item.priority.title
-        priorityBadge.backgroundColor = item.priority.color
+        
+        // 根据优先级设置不同的背景色
+        switch item.priority {
+        case .p0:
+            priorityBadge.backgroundColor = UIColor(red: 255/255, green: 99/255, blue: 71/255, alpha: 1.0) // 红色
+        case .p1:
+            priorityBadge.backgroundColor = UIColor(red: 255/255, green: 165/255, blue: 0/255, alpha: 1.0) // 橙色
+        case .p2:
+            priorityBadge.backgroundColor = UIColor(red: 0/255, green: 122/255, blue: 255/255, alpha: 1.0) // 蓝色
+        }
+        
         nameLabel.text = item.name
-        nameLabel.textColor = item.isChecked ? .secondaryLabel : .label
+        nameLabel.textColor = item.isChecked ? .secondaryLabel : UIColor(red: 33/255, green: 33/255, blue: 33/255, alpha: 1.0)
         nameLabel.attributedText = item.isChecked ? NSAttributedString(
             string: item.name,
             attributes: [.strikethroughStyle: NSUnderlineStyle.single.rawValue]
         ) : NSAttributedString(string: item.name)
+        
+        // 根据物品名称设置描述
+        if item.name == "Universal Power Adapter" {
+            descriptionLabel.text = "Type A/B for Japan outlets"
+        } else {
+            descriptionLabel.text = ""
+        }
+        
         checkmarkImageView.isHidden = !item.isChecked
     }
 }
