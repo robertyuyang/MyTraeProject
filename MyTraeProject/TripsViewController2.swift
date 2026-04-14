@@ -19,6 +19,12 @@ class TripsViewController2: UIViewController {
         viewModel.loadData()
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        // 确保导航栏始终隐藏
+        navigationController?.setNavigationBarHidden(true, animated: false)
+    }
+    
     private func setupViewModel() {
         viewModel.reloadData = { [weak self] in
             self?.tableView.reloadData()
@@ -33,8 +39,8 @@ class TripsViewController2: UIViewController {
         // 设置背景颜色
         view.backgroundColor = UIColor(red: 250/255, green: 250/255, blue: 250/255, alpha: 1.0)
         
-        // 设置导航栏
-        setupNavigationBar()
+        // 添加页面标题
+        setupPageTitle()
         
         // 设置表格视图
         setupTableView()
@@ -46,58 +52,18 @@ class TripsViewController2: UIViewController {
         setupFloatingActionButton()
     }
     
-    private func setupNavigationBar() {
-        // 隐藏默认导航栏
-        navigationController?.setNavigationBarHidden(true, animated: false)
-        
-        // 创建自定义导航栏
-        let navBarView = UIView()
-        navBarView.backgroundColor = UIColor(red: 250/255, green: 250/255, blue: 250/255, alpha: 1.0)
-        navBarView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(navBarView)
-        
-        // 添加应用图标
-        let appIcon = UIImageView()
-        appIcon.image = UIImage(systemName: "suitcase")
-        appIcon.tintColor = .systemBlue
-        appIcon.translatesAutoresizingMaskIntoConstraints = false
-        navBarView.addSubview(appIcon)
-        
-        // 添加应用标题
-        let appTitleLabel = UILabel()
-        appTitleLabel.text = "The Editorial Traveler"
-        appTitleLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        appTitleLabel.textColor = .black
-        appTitleLabel.translatesAutoresizingMaskIntoConstraints = false
-        navBarView.addSubview(appTitleLabel)
-        
+    private func setupPageTitle() {
         // 添加页面标题
         let pageTitleLabel = UILabel()
         pageTitleLabel.text = "My Trips"
-        pageTitleLabel.font = UIFont.systemFont(ofSize: 34, weight: .bold)
+        pageTitleLabel.font = UIFont.systemFont(ofSize: 28, weight: .bold)
         pageTitleLabel.textColor = .black
         pageTitleLabel.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(pageTitleLabel)
         
         NSLayoutConstraint.activate([
-            // 导航栏约束
-            navBarView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            navBarView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            navBarView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            navBarView.heightAnchor.constraint(equalToConstant: 44),
-            
-            // 应用图标约束
-            appIcon.leadingAnchor.constraint(equalTo: navBarView.leadingAnchor, constant: 16),
-            appIcon.centerYAnchor.constraint(equalTo: navBarView.centerYAnchor),
-            appIcon.widthAnchor.constraint(equalToConstant: 24),
-            appIcon.heightAnchor.constraint(equalToConstant: 24),
-            
-            // 应用标题约束
-            appTitleLabel.leadingAnchor.constraint(equalTo: appIcon.trailingAnchor, constant: 8),
-            appTitleLabel.centerYAnchor.constraint(equalTo: navBarView.centerYAnchor),
-            
             // 页面标题约束
-            pageTitleLabel.topAnchor.constraint(equalTo: navBarView.bottomAnchor, constant: 24),
+            pageTitleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
             pageTitleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             pageTitleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16)
         ])
@@ -110,11 +76,11 @@ class TripsViewController2: UIViewController {
         tableView.dataSource = self
         tableView.separatorStyle = .none
         tableView.backgroundColor = .clear
-        tableView.contentInset = UIEdgeInsets(top: 16, left: 0, bottom: 100, right: 0) // 为底部导航栏留出空间
+        tableView.contentInset = UIEdgeInsets(top: 8, left: 0, bottom: 100, right: 0) // 为底部导航栏留出空间
         view.addSubview(tableView)
         
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 100), // 为导航栏和页面标题留出空间
+            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 56), // 为页面标题留出空间
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
@@ -256,11 +222,11 @@ extension TripsViewController2: UITableViewDataSource, UITableViewDelegate {
 
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 340 // 调整高度以适应卡片布局
+        return 340
     }
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 16 // 设置顶部间距
+        return 4
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
@@ -270,7 +236,7 @@ extension TripsViewController2: UITableViewDataSource, UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        return 16 // 设置卡片之间的间距
+        return 4
     }
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
@@ -420,10 +386,10 @@ class TripCell: UITableViewCell {
         
         NSLayoutConstraint.activate([
             // 卡片容器约束
-            cardView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
+            cardView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 4),
             cardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             cardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            cardView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8),
+            cardView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -4),
             
             // 状态标签
             statusLabel.topAnchor.constraint(equalTo: cardView.topAnchor, constant: 16),
