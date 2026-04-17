@@ -122,8 +122,8 @@ class DetailViewController: UIViewController {
         let items = trip.items
         
         for priority in Priority.allCases {
-            let priorityItems = items.filter { $0.priority == priority }
-            let checkedCount = priorityItems.filter { $0.isChecked }.count
+            let priorityItems = items.filter { trip.priority(for: $0) == priority }
+            let checkedCount = priorityItems.filter { trip.isItemChecked($0) }.count
             let totalCount = priorityItems.count
             let percentage = totalCount > 0 ? Double(checkedCount) / Double(totalCount) : 0
             
@@ -150,8 +150,8 @@ class DetailViewController: UIViewController {
     @objc private func addNewItem() {
         let alert = UIAlertController(title: "添加物品", message: nil, preferredStyle: .actionSheet)
         
-        for category in Category.allCases {
-            alert.addAction(UIAlertAction(title: category.title, style: .default) { [weak self] _ in
+        for category in BuiltInCategory.allCases {
+            alert.addAction(UIAlertAction(title: category, style: .default) { [weak self] _ in
                 self?.showPrioritySelectionAlert(category: category)
             })
         }
@@ -161,7 +161,7 @@ class DetailViewController: UIViewController {
     }
     
     private func showPrioritySelectionAlert(category: Category) {
-        let alert = UIAlertController(title: "选择优先级", message: "类别: \(category.title)", preferredStyle: .actionSheet)
+        let alert = UIAlertController(title: "选择优先级", message: "类别: \(category)", preferredStyle: .actionSheet)
         
         for priority in Priority.allCases {
             alert.addAction(UIAlertAction(title: priority.title, style: .default) { [weak self] _ in
@@ -174,7 +174,7 @@ class DetailViewController: UIViewController {
     }
     
     private func showItemNameAlert(category: Category, priority: Priority) {
-        let alert = UIAlertController(title: "输入物品名称", message: "类别: \(category.title), 优先级: \(priority.title)", preferredStyle: .alert)
+        let alert = UIAlertController(title: "输入物品名称", message: "类别: \(category), 优先级: \(priority.title)", preferredStyle: .alert)
         alert.addTextField { textField in
             textField.placeholder = "物品名称"
         }
@@ -203,9 +203,11 @@ extension DetailViewController: UITableViewDataSource, UITableViewDelegate {
         return Dictionary(grouping: trip.items) { $0.category }
     }
     
-    // 获取所有类别，按特定顺序排序
     private var sortedCategories: [Category] {
-        return [.electronics, .documents, .clothing, .toiletries, .other].filter { groupedItems[$0] != nil }
+        let grouped = groupedItems
+        let builtIn = BuiltInCategory.allCases.filter { grouped[$0] != nil }
+        let custom = grouped.keys.filter { !BuiltInCategory.allCases.contains($0) }.sorted()
+        return builtIn + custom
     }
     
     func numberOfSections(in tableView: UITableView) -> Int {
@@ -222,7 +224,7 @@ extension DetailViewController: UITableViewDataSource, UITableViewDelegate {
         headerView.backgroundColor = .systemBackground
         
         let titleLabel = UILabel()
-        titleLabel.text = sortedCategories[section].title
+        titleLabel.text = sortedCategories[section]
         titleLabel.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
         titleLabel.textColor = UIColor(red: 33/255, green: 33/255, blue: 33/255, alpha: 1.0)
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -246,7 +248,7 @@ extension DetailViewController: UITableViewDataSource, UITableViewDelegate {
         let category = sortedCategories[indexPath.section]
         let items = groupedItems[category]!
         let item = items[indexPath.row]
-        cell.configure(with: item)
+        cell.configure(with: item, priority: trip.priority(for: item), isChecked: trip.isItemChecked(item))
         return cell
     }
     
@@ -255,10 +257,8 @@ extension DetailViewController: UITableViewDataSource, UITableViewDelegate {
         let category = sortedCategories[indexPath.section]
         let items = groupedItems[category]!
         let item = items[indexPath.row]
-        if let index = trip.items.firstIndex(where: { $0.id == item.id }) {
-            trip.items[index].isChecked.toggle()
-            saveAndUpdate()
-        }
+        trip.toggleItemChecked(item)
+        saveAndUpdate()
     }
     
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
@@ -492,30 +492,28 @@ class ItemCell: UITableViewCell {
         ])
     }
     
-    func configure(with item: TripItem) {
-        priorityBadge.text = item.priority.title
+    func configure(with item: TripItem, priority: Priority, isChecked: Bool) {
+        priorityBadge.text = priority.title
         
-        // 根据优先级设置不同的背景色
-        switch item.priority {
+        switch priority {
         case .p0:
-            priorityBadge.backgroundColor = UIColor(red: 255/255, green: 99/255, blue: 71/255, alpha: 1.0) // 红色
+            priorityBadge.backgroundColor = UIColor(red: 255/255, green: 99/255, blue: 71/255, alpha: 1.0)
         case .p1:
-            priorityBadge.backgroundColor = UIColor(red: 255/255, green: 165/255, blue: 0/255, alpha: 1.0) // 橙色
+            priorityBadge.backgroundColor = UIColor(red: 255/255, green: 165/255, blue: 0/255, alpha: 1.0)
         case .p2:
-            priorityBadge.backgroundColor = UIColor(red: 0/255, green: 122/255, blue: 255/255, alpha: 1.0) // 蓝色
+            priorityBadge.backgroundColor = UIColor(red: 0/255, green: 122/255, blue: 255/255, alpha: 1.0)
         }
         
         nameLabel.attributedText = nil
         nameLabel.text = item.name
-        nameLabel.textColor = item.isChecked ? UIColor(red: 180/255, green: 180/255, blue: 180/255, alpha: 1.0) : UIColor(red: 33/255, green: 33/255, blue: 33/255, alpha: 1.0)
+        nameLabel.textColor = isChecked ? UIColor(red: 180/255, green: 180/255, blue: 180/255, alpha: 1.0) : UIColor(red: 33/255, green: 33/255, blue: 33/255, alpha: 1.0)
         
-        // 根据物品名称设置描述
         if item.name == "Universal Power Adapter" {
             descriptionLabel.text = "Type A/B for Japan outlets"
         } else {
             descriptionLabel.text = ""
         }
         
-        checkmarkImageView.isHidden = !item.isChecked
+        checkmarkImageView.isHidden = !isChecked
     }
 }

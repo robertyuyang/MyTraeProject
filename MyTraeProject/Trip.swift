@@ -28,31 +28,33 @@ enum Priority: Int, Codable, CaseIterable {
     }
 }
 
-enum Category: String, Codable, CaseIterable {
-    case electronics = "Electronics"
-    case documents = "Documents"
-    case clothing = "Clothing"
-    case toiletries = "Toiletries"
-    case other = "Other"
-    
-    var title: String {
-        return rawValue
-    }
+typealias Category = String
+
+enum BuiltInCategory {
+    static let electronics: Category = "Electronics"
+    static let documents: Category = "Documents"
+    static let clothing: Category = "Clothing"
+    static let toiletries: Category = "Toiletries"
+    static let ids: Category = "IDs"
+    static let medicine: Category = "Medicine"
+    static let personalCare: Category = "Personal Care"
+    static let entertainment: Category = "Entertainment"
+    static let other: Category = "Other"
+
+    static let allCases: [Category] = [electronics, documents, clothing, toiletries, ids, medicine, personalCare, entertainment, other]
 }
 
 struct TripItem: Codable, Equatable {
     let id: UUID
     var name: String
-    var priority: Priority
+    var defaultPriority: Priority
     var category: Category
-    var isChecked: Bool
     
-    init(name: String, priority: Priority, category: Category = .other) {
+    init(name: String, defaultPriority: Priority, category: Category = BuiltInCategory.other) {
         self.id = UUID()
         self.name = name
-        self.priority = priority
+        self.defaultPriority = defaultPriority
         self.category = category
-        self.isChecked = false
     }
 }
 
@@ -60,13 +62,37 @@ struct Trip: Codable, Equatable {
     let id: UUID
     var name: String
     var items: [TripItem]
+    var checkedItemIDs: Set<UUID>
+    var priorityOverrides: [UUID: Priority]
     var imageUrl: String?
     
     init(name: String) {
         self.id = UUID()
         self.name = name
         self.items = []
+        self.checkedItemIDs = []
+        self.priorityOverrides = [:]
         self.imageUrl = nil
+    }
+    
+    func isItemChecked(_ item: TripItem) -> Bool {
+        checkedItemIDs.contains(item.id)
+    }
+    
+    mutating func toggleItemChecked(_ item: TripItem) {
+        if checkedItemIDs.contains(item.id) {
+            checkedItemIDs.remove(item.id)
+        } else {
+            checkedItemIDs.insert(item.id)
+        }
+    }
+    
+    func priority(for item: TripItem) -> Priority {
+        priorityOverrides[item.id] ?? item.defaultPriority
+    }
+    
+    mutating func setPriority(_ priority: Priority, for item: TripItem) {
+        priorityOverrides[item.id] = priority
     }
 }
 

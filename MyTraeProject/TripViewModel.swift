@@ -45,41 +45,34 @@ class TripViewModel {
         
         // 添加示例项目
         // 沿海公路探险
-        coastalTrip.items.append(TripItem(name: "打包徒步靴", priority: .p0, category: .clothing))
-        coastalTrip.items.append(TripItem(name: "预订海滨住宿", priority: .p0, category: .other))
-        coastalTrip.items.append(TripItem(name: "规划风景路线", priority: .p0, category: .other))
-        coastalTrip.items.append(TripItem(name: "打包泳衣", priority: .p0, category: .clothing))
-        coastalTrip.items.append(TripItem(name: "检查汽车租赁", priority: .p0, category: .other))
-        coastalTrip.items.append(TripItem(name: "购买旅行保险", priority: .p1, category: .other))
-        coastalTrip.items.append(TripItem(name: "打包相机", priority: .p1, category: .electronics))
-        coastalTrip.items.append(TripItem(name: "研究当地餐馆", priority: .p2, category: .other))
+        coastalTrip.items.append(TripItem(name: "打包徒步靴", defaultPriority: .p0, category: BuiltInCategory.clothing))
+        coastalTrip.items.append(TripItem(name: "预订海滨住宿", defaultPriority: .p0, category: BuiltInCategory.other))
+        coastalTrip.items.append(TripItem(name: "规划风景路线", defaultPriority: .p0, category: BuiltInCategory.other))
+        coastalTrip.items.append(TripItem(name: "打包泳衣", defaultPriority: .p0, category: BuiltInCategory.clothing))
+        coastalTrip.items.append(TripItem(name: "检查汽车租赁", defaultPriority: .p0, category: BuiltInCategory.other))
+        coastalTrip.items.append(TripItem(name: "购买旅行保险", defaultPriority: .p1, category: BuiltInCategory.other))
+        coastalTrip.items.append(TripItem(name: "打包相机", defaultPriority: .p1, category: BuiltInCategory.electronics))
+        coastalTrip.items.append(TripItem(name: "研究当地餐馆", defaultPriority: .p2, category: BuiltInCategory.other))
         
-        // 葡萄酒乡 retreat
-        wineTrip.items.append(TripItem(name: "预订酒庄之旅", priority: .p0, category: .other))
-        wineTrip.items.append(TripItem(name: "预订精品酒店", priority: .p0, category: .other))
-        wineTrip.items.append(TripItem(name: "打包舒适鞋子", priority: .p0, category: .clothing))
-        wineTrip.items.append(TripItem(name: "研究葡萄酒品种", priority: .p1, category: .other))
-        wineTrip.items.append(TripItem(name: "规划交通", priority: .p1, category: .other))
-        wineTrip.items.append(TripItem(name: "购买品酒笔记本", priority: .p2, category: .other))
+        wineTrip.items.append(TripItem(name: "预订酒庄之旅", defaultPriority: .p0, category: BuiltInCategory.other))
+        wineTrip.items.append(TripItem(name: "预订精品酒店", defaultPriority: .p0, category: BuiltInCategory.other))
+        wineTrip.items.append(TripItem(name: "打包舒适鞋子", defaultPriority: .p0, category: BuiltInCategory.clothing))
+        wineTrip.items.append(TripItem(name: "研究葡萄酒品种", defaultPriority: .p1, category: BuiltInCategory.other))
+        wineTrip.items.append(TripItem(name: "规划交通", defaultPriority: .p1, category: BuiltInCategory.other))
+        wineTrip.items.append(TripItem(name: "购买品酒笔记本", defaultPriority: .p2, category: BuiltInCategory.other))
         
-        // 城市建筑漫步
-        urbanTrip.items.append(TripItem(name: "研究建筑地标", priority: .p0, category: .other))
-        urbanTrip.items.append(TripItem(name: "预订市中心住宿", priority: .p0, category: .other))
-        urbanTrip.items.append(TripItem(name: "规划步行路线", priority: .p0, category: .other))
-        urbanTrip.items.append(TripItem(name: "打包舒适步行鞋", priority: .p0, category: .clothing))
+        urbanTrip.items.append(TripItem(name: "研究建筑地标", defaultPriority: .p0, category: BuiltInCategory.other))
+        urbanTrip.items.append(TripItem(name: "预订市中心住宿", defaultPriority: .p0, category: BuiltInCategory.other))
+        urbanTrip.items.append(TripItem(name: "规划步行路线", defaultPriority: .p0, category: BuiltInCategory.other))
+        urbanTrip.items.append(TripItem(name: "打包舒适步行鞋", defaultPriority: .p0, category: BuiltInCategory.clothing))
         
-        // 标记一些项目为已完成
-        coastalTrip.items[0].isChecked = true
-        coastalTrip.items[1].isChecked = true
-        coastalTrip.items[2].isChecked = true
-        coastalTrip.items[3].isChecked = true
-        coastalTrip.items[6].isChecked = true
-        coastalTrip.items[7].isChecked = true
-        
-        wineTrip.items[0].isChecked = true
-        wineTrip.items[1].isChecked = true
-        
-        urbanTrip.items[0].isChecked = true
+        for i in [0, 1, 2, 3, 6, 7] {
+            coastalTrip.checkedItemIDs.insert(coastalTrip.items[i].id)
+        }
+        for i in [0, 1] {
+            wineTrip.checkedItemIDs.insert(wineTrip.items[i].id)
+        }
+        urbanTrip.checkedItemIDs.insert(urbanTrip.items[0].id)
         
         // 添加到数组
         trips = [coastalTrip, wineTrip, urbanTrip]
@@ -176,16 +169,15 @@ class TripViewModel {
     
     // 计算某个清单的P0进度
     func p0Progress(for trip: Trip) -> (checked: Int, total: Int, percentage: Double) {
-        let p0Items = trip.items.filter { $0.priority == .p0 }
-        let checkedCount = p0Items.filter { $0.isChecked }.count
+        let p0Items = trip.items.filter { trip.priority(for: $0) == .p0 }
+        let checkedCount = p0Items.filter { trip.isItemChecked($0) }.count
         let totalCount = p0Items.count
         let percentage = totalCount > 0 ? Double(checkedCount) / Double(totalCount) : 0
         return (checkedCount, totalCount, percentage)
     }
     
-    // 计算总进度
     func totalProgress(for trip: Trip) -> (checked: Int, total: Int, percentage: Double) {
-        let checkedCount = trip.items.filter { $0.isChecked }.count
+        let checkedCount = trip.items.filter { trip.isItemChecked($0) }.count
         let totalCount = trip.items.count
         let percentage = totalCount > 0 ? Double(checkedCount) / Double(totalCount) : 0
         return (checkedCount, totalCount, percentage)
