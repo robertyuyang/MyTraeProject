@@ -181,7 +181,7 @@ class DetailViewController: UIViewController {
         
         let confirmAction = UIAlertAction(title: "确定", style: .default) { [weak self] _ in
             guard let self = self, let name = alert.textFields?.first?.text, !name.isEmpty else { return }
-            let newItem = TripItem(name: name, priority: priority, category: category)
+            let newItem = TripItem(name: name, defaultPriority: priority, category: category)
             self.trip.items.append(newItem)
             self.saveAndUpdate()
         }

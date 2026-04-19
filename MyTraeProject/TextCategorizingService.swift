@@ -18,9 +18,4 @@ class RuleBasedCategorizingService: TextCategorizingService {
     }
 }
 
-class LLMCategorizingService: TextCategorizingService {
-    func categorize(text: String, completion: @escaping (Result<[TripItem], Error>) -> Void) {
-        // TODO: 大模型的实现
-        completion(.success([]))
-    }
-}
+

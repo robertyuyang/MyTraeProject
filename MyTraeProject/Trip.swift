@@ -32,16 +32,15 @@ typealias Category = String
 
 enum BuiltInCategory {
     static let electronics: Category = "Electronics"
-    static let documents: Category = "Documents"
+    static let documentsAndIDs: Category = "Documents & IDs"
     static let clothing: Category = "Clothing"
     static let toiletries: Category = "Toiletries"
-    static let ids: Category = "IDs"
     static let medicine: Category = "Medicine"
     static let personalCare: Category = "Personal Care"
     static let entertainment: Category = "Entertainment"
     static let other: Category = "Other"
 
-    static let allCases: [Category] = [electronics, documents, clothing, toiletries, ids, medicine, personalCare, entertainment, other]
+    static let allCases: [Category] = [electronics, documentsAndIDs, clothing, toiletries, medicine, personalCare, entertainment, other]
 }
 
 struct TripItem: Codable, Equatable {

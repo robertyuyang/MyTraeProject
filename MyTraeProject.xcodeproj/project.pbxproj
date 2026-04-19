@@ -6,8 +6,19 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		AA000001AAAA00000000AAAA /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2B6523E02F63B9690033EAFC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2B6523E72F63B9690033EAFC;
+			remoteInfo = MyTraeProject;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		2B6523E82F63B9690033EAFC /* MyTraeProject.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MyTraeProject.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA000002AAAA00000000AAAA /* MyTraeProjectTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MyTraeProjectTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -29,10 +40,22 @@
 			path = MyTraeProject;
 			sourceTree = "<group>";
 		};
+		AA000003AAAA00000000AAAA /* MyTraeProjectTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = MyTraeProjectTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		2B6523E52F63B9690033EAFC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA000004AAAA00000000AAAA /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -46,6 +69,7 @@
 			isa = PBXGroup;
 			children = (
 				2B6523EA2F63B9690033EAFC /* MyTraeProject */,
+				AA000003AAAA00000000AAAA /* MyTraeProjectTests */,
 				2B6523E92F63B9690033EAFC /* Products */,
 			);
 			sourceTree = "<group>";
@@ -54,6 +78,7 @@
 			isa = PBXGroup;
 			children = (
 				2B6523E82F63B9690033EAFC /* MyTraeProject.app */,
+				AA000002AAAA00000000AAAA /* MyTraeProjectTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -83,6 +108,29 @@
 			productReference = 2B6523E82F63B9690033EAFC /* MyTraeProject.app */;
 			productType = "com.apple.product-type.application";
 		};
+		AA000005AAAA00000000AAAA /* MyTraeProjectTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA000006AAAA00000000AAAA /* Build configuration list for PBXNativeTarget "MyTraeProjectTests" */;
+			buildPhases = (
+				AA000007AAAA00000000AAAA /* Sources */,
+				AA000004AAAA00000000AAAA /* Frameworks */,
+				AA000008AAAA00000000AAAA /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AA000009AAAA00000000AAAA /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				AA000003AAAA00000000AAAA /* MyTraeProjectTests */,
+			);
+			name = MyTraeProjectTests;
+			packageProductDependencies = (
+			);
+			productName = MyTraeProjectTests;
+			productReference = AA000002AAAA00000000AAAA /* MyTraeProjectTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -95,6 +143,10 @@
 				TargetAttributes = {
 					2B6523E72F63B9690033EAFC = {
 						CreatedOnToolsVersion = 26.0;
+					};
+					AA000005AAAA00000000AAAA = {
+						CreatedOnToolsVersion = 26.0;
+						TestTargetID = 2B6523E72F63B9690033EAFC;
 					};
 				};
 			};
@@ -113,12 +165,20 @@
 			projectRoot = "";
 			targets = (
 				2B6523E72F63B9690033EAFC /* MyTraeProject */,
+				AA000005AAAA00000000AAAA /* MyTraeProjectTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		2B6523E62F63B9690033EAFC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA000008AAAA00000000AAAA /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -135,7 +195,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AA000007AAAA00000000AAAA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		AA000009AAAA00000000AAAA /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2B6523E72F63B9690033EAFC /* MyTraeProject */;
+			targetProxy = AA000001AAAA00000000AAAA /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		2B6523FC2F63B96B0033EAFC /* Debug */ = {
@@ -323,6 +398,50 @@
 			};
 			name = Release;
 		};
+		AA00000AAAAA00000000AAAA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 6KKRZB4E7A;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.test.MyTraeProjectTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MyTraeProject.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MyTraeProject";
+			};
+			name = Debug;
+		};
+		AA00000BAAAA00000000AAAA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 6KKRZB4E7A;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.test.MyTraeProjectTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MyTraeProject.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MyTraeProject";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -340,6 +459,15 @@
 			buildConfigurations = (
 				2B6523FC2F63B96B0033EAFC /* Debug */,
 				2B6523FD2F63B96B0033EAFC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AA000006AAAA00000000AAAA /* Build configuration list for PBXNativeTarget "MyTraeProjectTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA00000AAAAA00000000AAAA /* Debug */,
+				AA00000BAAAA00000000AAAA /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
