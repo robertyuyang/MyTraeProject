@@ -16,7 +16,10 @@ class DetailViewController: UIViewController {
     var trip: Trip!
     var index: Int!
     
+    private var isEditingMode = false
+    
     private let stackView = UIStackView()
+    private let tripNameTextField = UITextField()
     private let p0ProgressView = ProgressView()
     private let p1ProgressView = ProgressView()
     private let p2ProgressView = ProgressView()
@@ -50,6 +53,18 @@ class DetailViewController: UIViewController {
         backButton.tintColor = .black
         backButton.addTarget(self, action: #selector(closeDetailView), for: .touchUpInside)
         navigationItem.leftBarButtonItem = UIBarButtonItem(customView: backButton)
+        
+        let editButton = UIBarButtonItem(title: "编辑", style: .plain, target: self, action: #selector(toggleEditMode))
+        editButton.tintColor = UIColor(red: 255/255, green: 99/255, blue: 71/255, alpha: 1.0)
+        navigationItem.rightBarButtonItem = editButton
+        
+        tripNameTextField.font = .systemFont(ofSize: 20, weight: .bold)
+        tripNameTextField.textColor = UIColor(red: 33/255, green: 33/255, blue: 33/255, alpha: 1.0)
+        tripNameTextField.borderStyle = .roundedRect
+        tripNameTextField.text = trip.name
+        tripNameTextField.isHidden = true
+        tripNameTextField.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(tripNameTextField)
         
         stackView.axis = .vertical
         stackView.spacing = 12
@@ -86,7 +101,12 @@ class DetailViewController: UIViewController {
         view.addSubview(tableView)
         
         NSLayoutConstraint.activate([
-            stackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
+            tripNameTextField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
+            tripNameTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            tripNameTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            tripNameTextField.heightAnchor.constraint(equalToConstant: 44),
+            
+            stackView.topAnchor.constraint(equalTo: tripNameTextField.bottomAnchor, constant: 8),
             stackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             stackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             
@@ -191,7 +211,30 @@ class DetailViewController: UIViewController {
         present(alert, animated: true)
     }
     
+    @objc private func toggleEditMode() {
+        isEditingMode.toggle()
+        
+        if isEditingMode {
+            navigationItem.rightBarButtonItem?.title = "完成"
+            tripNameTextField.isHidden = false
+            tripNameTextField.text = trip.name
+        } else {
+            navigationItem.rightBarButtonItem?.title = "编辑"
+            if let newName = tripNameTextField.text, !newName.isEmpty {
+                trip.name = newName
+                title = newName
+            }
+            tripNameTextField.isHidden = true
+            view.endEditing(true)
+            saveAndUpdate()
+        }
+        tableView.reloadData()
+    }
+    
     @objc private func closeDetailView() {
+        if isEditingMode {
+            toggleEditMode()
+        }
         navigationController?.popViewController(animated: true)
     }
     
@@ -248,17 +291,43 @@ extension DetailViewController: UITableViewDataSource, UITableViewDelegate {
         let category = sortedCategories[indexPath.section]
         let items = groupedItems[category]!
         let item = items[indexPath.row]
-        cell.configure(with: item, priority: trip.priority(for: item), isChecked: trip.isItemChecked(item))
+        cell.configure(with: item, priority: trip.priority(for: item), isChecked: trip.isItemChecked(item), isEditing: isEditingMode)
+        cell.onNameChanged = { [weak self] newName in
+            guard let self = self else { return }
+            if let idx = self.trip.items.firstIndex(where: { $0.id == item.id }) {
+                self.trip.items[idx].name = newName
+            }
+        }
+        cell.onPriorityTapped = { [weak self] in
+            guard let self = self else { return }
+            self.showPriorityPicker(for: item)
+        }
         return cell
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
+        if isEditingMode { return }
         let category = sortedCategories[indexPath.section]
         let items = groupedItems[category]!
         let item = items[indexPath.row]
         trip.toggleItemChecked(item)
         saveAndUpdate()
+    }
+    
+    private func showPriorityPicker(for item: TripItem) {
+        let alert = UIAlertController(title: "选择优先级", message: nil, preferredStyle: .actionSheet)
+        for priority in Priority.allCases {
+            let currentPriority = trip.priority(for: item)
+            let title = priority == currentPriority ? "\(priority.title) ✓" : priority.title
+            alert.addAction(UIAlertAction(title: title, style: .default) { [weak self] _ in
+                guard let self = self else { return }
+                self.trip.setPriority(priority, for: item)
+                self.saveAndUpdate()
+            })
+        }
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+        present(alert, animated: true)
     }
     
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
@@ -405,11 +474,17 @@ class ProgressView: UIView {
 }
 
 class ItemCell: UITableViewCell {
+    
+    var onNameChanged: ((String) -> Void)?
+    var onPriorityTapped: (() -> Void)?
+    
     private let containerView = UIView()
     private let priorityBadge = UILabel()
     private let nameLabel = UILabel()
+    private let nameTextField = UITextField()
     private let descriptionLabel = UILabel()
     private let checkmarkImageView = UIImageView()
+    private var priorityTapGesture: UITapGestureRecognizer?
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -421,7 +496,8 @@ class ItemCell: UITableViewCell {
     }
     
     private func setupUI() {
-        // 容器视图
+        selectionStyle = .none
+        
         containerView.backgroundColor = UIColor(red: 255/255, green: 255/255, blue: 255/255, alpha: 1.0)
         containerView.layer.borderWidth = 1
         containerView.layer.borderColor = UIColor(red: 229/255, green: 229/255, blue: 229/255, alpha: 1.0).cgColor
@@ -433,58 +509,65 @@ class ItemCell: UITableViewCell {
         containerView.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(containerView)
         
-        // 优先级标签
         priorityBadge.font = .systemFont(ofSize: 12, weight: .bold)
         priorityBadge.textColor = .white
         priorityBadge.textAlignment = .center
         priorityBadge.layer.cornerRadius = 6
         priorityBadge.layer.masksToBounds = true
+        priorityBadge.isUserInteractionEnabled = true
         priorityBadge.translatesAutoresizingMaskIntoConstraints = false
+        let tap = UITapGestureRecognizer(target: self, action: #selector(priorityBadgeTapped))
+        priorityBadge.addGestureRecognizer(tap)
+        priorityTapGesture = tap
         containerView.addSubview(priorityBadge)
         
-        // 名称标签
         nameLabel.font = .systemFont(ofSize: 16, weight: .medium)
         nameLabel.textColor = UIColor(red: 33/255, green: 33/255, blue: 33/255, alpha: 1.0)
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
         containerView.addSubview(nameLabel)
         
-        // 描述标签
+        nameTextField.font = .systemFont(ofSize: 16, weight: .medium)
+        nameTextField.textColor = UIColor(red: 33/255, green: 33/255, blue: 33/255, alpha: 1.0)
+        nameTextField.borderStyle = .roundedRect
+        nameTextField.isHidden = true
+        nameTextField.translatesAutoresizingMaskIntoConstraints = false
+        nameTextField.addTarget(self, action: #selector(nameTextFieldChanged), for: .editingChanged)
+        containerView.addSubview(nameTextField)
+        
         descriptionLabel.font = .systemFont(ofSize: 14)
         descriptionLabel.textColor = UIColor(red: 117/255, green: 117/255, blue: 117/255, alpha: 1.0)
         descriptionLabel.translatesAutoresizingMaskIntoConstraints = false
         containerView.addSubview(descriptionLabel)
         
-        // 勾选图标
         checkmarkImageView.image = UIImage(systemName: "checkmark.circle.fill")
         checkmarkImageView.tintColor = .systemGreen
         checkmarkImageView.translatesAutoresizingMaskIntoConstraints = false
         containerView.addSubview(checkmarkImageView)
         
         NSLayoutConstraint.activate([
-            // 容器视图约束
             containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 4),
             containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -4),
             
-            // 优先级标签约束
             priorityBadge.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 12),
             priorityBadge.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
             priorityBadge.widthAnchor.constraint(equalToConstant: 36),
             priorityBadge.heightAnchor.constraint(equalToConstant: 24),
             
-            // 名称标签约束
             nameLabel.leadingAnchor.constraint(equalTo: priorityBadge.trailingAnchor, constant: 12),
             nameLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 12),
             nameLabel.trailingAnchor.constraint(equalTo: checkmarkImageView.leadingAnchor, constant: -12),
             
-            // 描述标签约束
+            nameTextField.leadingAnchor.constraint(equalTo: priorityBadge.trailingAnchor, constant: 12),
+            nameTextField.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 8),
+            nameTextField.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -12),
+            
             descriptionLabel.leadingAnchor.constraint(equalTo: priorityBadge.trailingAnchor, constant: 12),
             descriptionLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 4),
             descriptionLabel.trailingAnchor.constraint(equalTo: checkmarkImageView.leadingAnchor, constant: -12),
             descriptionLabel.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -12),
             
-            // 勾选图标约束
             checkmarkImageView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -12),
             checkmarkImageView.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
             checkmarkImageView.widthAnchor.constraint(equalToConstant: 24),
@@ -492,7 +575,23 @@ class ItemCell: UITableViewCell {
         ])
     }
     
-    func configure(with item: TripItem, priority: Priority, isChecked: Bool) {
+    @objc private func nameTextFieldChanged() {
+        if let text = nameTextField.text {
+            onNameChanged?(text)
+        }
+    }
+    
+    @objc private func priorityBadgeTapped() {
+        onPriorityTapped?()
+    }
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        onNameChanged = nil
+        onPriorityTapped = nil
+    }
+    
+    func configure(with item: TripItem, priority: Priority, isChecked: Bool, isEditing: Bool = false) {
         priorityBadge.text = priority.title
         
         switch priority {
@@ -504,16 +603,28 @@ class ItemCell: UITableViewCell {
             priorityBadge.backgroundColor = UIColor(red: 0/255, green: 122/255, blue: 255/255, alpha: 1.0)
         }
         
-        nameLabel.attributedText = nil
-        nameLabel.text = item.name
-        nameLabel.textColor = isChecked ? UIColor(red: 180/255, green: 180/255, blue: 180/255, alpha: 1.0) : UIColor(red: 33/255, green: 33/255, blue: 33/255, alpha: 1.0)
+        if isEditing {
+            nameLabel.isHidden = true
+            nameTextField.isHidden = false
+            nameTextField.text = item.name
+            checkmarkImageView.isHidden = true
+            descriptionLabel.isHidden = true
+            containerView.layer.borderColor = UIColor(red: 255/255, green: 99/255, blue: 71/255, alpha: 0.5).cgColor
+        } else {
+            nameLabel.isHidden = false
+            nameTextField.isHidden = true
+            nameLabel.attributedText = nil
+            nameLabel.text = item.name
+            nameLabel.textColor = isChecked ? UIColor(red: 180/255, green: 180/255, blue: 180/255, alpha: 1.0) : UIColor(red: 33/255, green: 33/255, blue: 33/255, alpha: 1.0)
+            checkmarkImageView.isHidden = !isChecked
+            descriptionLabel.isHidden = false
+            containerView.layer.borderColor = UIColor(red: 229/255, green: 229/255, blue: 229/255, alpha: 1.0).cgColor
+        }
         
         if item.name == "Universal Power Adapter" {
             descriptionLabel.text = "Type A/B for Japan outlets"
         } else {
             descriptionLabel.text = ""
         }
-        
-        checkmarkImageView.isHidden = !isChecked
     }
 }
