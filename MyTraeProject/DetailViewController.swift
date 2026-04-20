@@ -158,47 +158,10 @@ class DetailViewController: UIViewController {
     }
     
     @objc private func addNewItem() {
-        let alert = UIAlertController(title: "添加物品", message: nil, preferredStyle: .actionSheet)
-        
-        for category in BuiltInCategory.allCases {
-            alert.addAction(UIAlertAction(title: category, style: .default) { [weak self] _ in
-                self?.showPrioritySelectionAlert(category: category)
-            })
-        }
-        
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        present(alert, animated: true)
-    }
-    
-    private func showPrioritySelectionAlert(category: Category) {
-        let alert = UIAlertController(title: "选择优先级", message: "类别: \(category)", preferredStyle: .actionSheet)
-        
-        for priority in Priority.allCases {
-            alert.addAction(UIAlertAction(title: priority.title, style: .default) { [weak self] _ in
-                self?.showItemNameAlert(category: category, priority: priority)
-            })
-        }
-        
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        present(alert, animated: true)
-    }
-    
-    private func showItemNameAlert(category: Category, priority: Priority) {
-        let alert = UIAlertController(title: "输入物品名称", message: "类别: \(category), 优先级: \(priority.title)", preferredStyle: .alert)
-        alert.addTextField { textField in
-            textField.placeholder = "物品名称"
-        }
-        
-        let confirmAction = UIAlertAction(title: "确定", style: .default) { [weak self] _ in
-            guard let self = self, let name = alert.textFields?.first?.text, !name.isEmpty else { return }
-            let newItem = TripItem(name: name, defaultPriority: priority, category: category)
-            self.trip.items.append(newItem)
-            self.saveAndUpdate()
-        }
-        
-        alert.addAction(confirmAction)
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        present(alert, animated: true)
+        let addVC = AddItemViewController()
+        addVC.delegate = self
+        addVC.tripName = trip.name
+        navigationController?.pushViewController(addVC, animated: true)
     }
     
     @objc private func toggleEditMode() {
@@ -321,6 +284,15 @@ class DetailViewController: UIViewController {
         dismissDropdown()
     }
     
+}
+
+extension DetailViewController: AddItemViewControllerDelegate {
+    func addItemViewController(_ controller: AddItemViewController, didAddItems items: [TripItem]) {
+        for item in items {
+            trip.items.append(item)
+        }
+        saveAndUpdate()
+    }
 }
 
 extension DetailViewController: UITableViewDataSource, UITableViewDelegate {

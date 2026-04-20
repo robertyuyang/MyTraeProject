@@ -35,12 +35,32 @@ enum BuiltInCategory {
     static let documentsAndIDs: Category = "Documents & IDs"
     static let clothing: Category = "Clothing"
     static let toiletries: Category = "Toiletries"
-    static let medicine: Category = "Medicine"
-    static let personalCare: Category = "Personal Care"
-    static let entertainment: Category = "Entertainment"
+    static let photography: Category = "Photography"
+    static let footwear: Category = "Footwear"
+    static let health: Category = "Health"
+    static let outdoor: Category = "Outdoor"
+    static let foodAndDrinks: Category = "Food & Drinks"
+    static let accessories: Category = "Accessories"
     static let other: Category = "Other"
 
-    static let allCases: [Category] = [electronics, documentsAndIDs, clothing, toiletries, medicine, personalCare, entertainment, other]
+    static let allCases: [Category] = [electronics, documentsAndIDs, clothing, toiletries, photography, footwear, health, outdoor, foodAndDrinks, accessories, other]
+
+    static func icon(for category: Category) -> String {
+        switch category {
+        case electronics: return "bolt.fill"
+        case documentsAndIDs: return "doc.text.fill"
+        case clothing: return "tshirt.fill"
+        case toiletries: return "drop.fill"
+        case photography: return "camera.fill"
+        case footwear: return "shoe.fill"
+        case health: return "heart.fill"
+        case outdoor: return "leaf.fill"
+        case foodAndDrinks: return "cup.and.saucer.fill"
+        case accessories: return "bag.fill"
+        case other: return "ellipsis.circle.fill"
+        default: return "questionmark.circle.fill"
+        }
+    }
 }
 
 struct TripItem: Codable, Equatable {
