@@ -469,6 +469,12 @@ extension DetailViewController: UITableViewDataSource, UITableViewDelegate {
 extension DetailViewController: UITableViewDragDelegate, UITableViewDropDelegate {
     
     func tableView(_ tableView: UITableView, itemsForBeginning session: UIDragSession, at indexPath: IndexPath) -> [UIDragItem] {
+        guard isEditingMode else { return [] }
+        let touchPoint = session.location(in: tableView.cellForRow(at: indexPath)!)
+        guard let cell = tableView.cellForRow(at: indexPath) as? ItemCell,
+              cell.isDragHandleHit(point: touchPoint) else {
+            return []
+        }
         let category = sortedCategories[indexPath.section]
         let items = groupedItems[category]!
         let item = items[indexPath.row]
@@ -486,6 +492,46 @@ extension DetailViewController: UITableViewDragDelegate, UITableViewDropDelegate
     }
     
     func tableView(_ tableView: UITableView, performDropWith coordinator: UITableViewDropCoordinator) {
+        guard let destinationIndexPath = coordinator.destinationIndexPath else { return }
+        
+        for item in coordinator.items {
+            guard let sourceIndexPath = item.sourceIndexPath else { continue }
+            
+            tableView.performBatchUpdates({
+                let sourceCategory = sortedCategories[sourceIndexPath.section]
+                let sourceItems = groupedItems[sourceCategory]!
+                let movedItem = sourceItems[sourceIndexPath.row]
+                
+                guard let globalSourceIndex = trip.items.firstIndex(where: { $0.id == movedItem.id }) else { return }
+                trip.items.remove(at: globalSourceIndex)
+                
+                let destCategory = sortedCategories[destinationIndexPath.section]
+                let destItems = trip.items.filter { $0.category == destCategory }
+                
+                var itemToInsert = movedItem
+                itemToInsert.category = destCategory
+                
+                if destinationIndexPath.row >= destItems.count {
+                    if let lastItem = destItems.last,
+                       let insertAfter = trip.items.firstIndex(where: { $0.id == lastItem.id }) {
+                        trip.items.insert(itemToInsert, at: insertAfter + 1)
+                    } else {
+                        trip.items.append(itemToInsert)
+                    }
+                } else {
+                    let targetItem = destItems[destinationIndexPath.row]
+                    if let insertAt = trip.items.firstIndex(where: { $0.id == targetItem.id }) {
+                        trip.items.insert(itemToInsert, at: insertAt)
+                    }
+                }
+            })
+            
+            coordinator.drop(item.dragItem, toRowAt: destinationIndexPath)
+        }
+        
+        updateProgress()
+        tableView.reloadData()
+        delegate?.detailViewController(self, didUpdateTrip: trip, at: index)
     }
 }
 
@@ -618,6 +664,7 @@ class ItemCell: UITableViewCell {
     
     var onNameChanged: ((String) -> Void)?
     var onPriorityTapped: (() -> Void)?
+    var onDragHandleLongPress: (() -> Void)?
     
     private let containerView = UIView()
     private let dragHandleImageView = UIImageView()
@@ -701,7 +748,11 @@ class ItemCell: UITableViewCell {
         reorderImageView.tintColor = UIColor(red: 200/255, green: 200/255, blue: 200/255, alpha: 1.0)
         reorderImageView.contentMode = .scaleAspectFit
         reorderImageView.isHidden = true
+        reorderImageView.isUserInteractionEnabled = true
         reorderImageView.translatesAutoresizingMaskIntoConstraints = false
+        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleReorderLongPress(_:)))
+        longPress.minimumPressDuration = 0.3
+        reorderImageView.addGestureRecognizer(longPress)
         containerView.addSubview(reorderImageView)
         
         NSLayoutConstraint.activate([
@@ -757,10 +808,10 @@ class ItemCell: UITableViewCell {
             descriptionLabel.trailingAnchor.constraint(equalTo: reorderImageView.leadingAnchor, constant: -8),
             descriptionLabel.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -10),
             
-            reorderImageView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -12),
+            reorderImageView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -8),
             reorderImageView.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-            reorderImageView.widthAnchor.constraint(equalToConstant: 20),
-            reorderImageView.heightAnchor.constraint(equalToConstant: 20),
+            reorderImageView.widthAnchor.constraint(equalToConstant: 28),
+            reorderImageView.heightAnchor.constraint(equalToConstant: 28),
         ]
         
         NSLayoutConstraint.activate(normalConstraints)
@@ -776,6 +827,19 @@ class ItemCell: UITableViewCell {
         onPriorityTapped?()
     }
     
+    @objc private func handleReorderLongPress(_ gesture: UILongPressGestureRecognizer) {
+        if gesture.state == .began {
+            onDragHandleLongPress?()
+        }
+    }
+    
+    func isDragHandleHit(point: CGPoint) -> Bool {
+        guard !reorderImageView.isHidden else { return false }
+        let handleFrame = reorderImageView.convert(reorderImageView.bounds, to: self)
+        let hitArea = handleFrame.insetBy(dx: -20, dy: -20)
+        return hitArea.contains(point)
+    }
+    
     func priorityButtonFrameInWindow() -> CGRect? {
         return priorityButton.superview?.convert(priorityButton.frame, to: nil)
     }
@@ -784,6 +848,7 @@ class ItemCell: UITableViewCell {
         super.prepareForReuse()
         onNameChanged = nil
         onPriorityTapped = nil
+        onDragHandleLongPress = nil
     }
     
     private func applyPriorityStyle(_ priority: Priority, isEditing: Bool) {
