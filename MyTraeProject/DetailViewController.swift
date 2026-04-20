@@ -117,6 +117,7 @@ class DetailViewController: UIViewController {
         floatingActionButton.layer.shadowRadius = 8
         floatingActionButton.translatesAutoresizingMaskIntoConstraints = false
         floatingActionButton.addTarget(self, action: #selector(addNewItem), for: .touchUpInside)
+        floatingActionButton.isHidden = true
         view.addSubview(floatingActionButton)
         
         // 浮动操作按钮约束
@@ -171,14 +172,19 @@ class DetailViewController: UIViewController {
         if isEditingMode {
             navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "checkmark"), style: .plain, target: self, action: #selector(toggleEditMode))
             navigationItem.rightBarButtonItem?.tintColor = .systemBlue
-            floatingActionButton.isHidden = true
+            floatingActionButton.isHidden = false
             tableView.dragInteractionEnabled = true
         } else {
             let editButton = UIBarButtonItem(image: UIImage(systemName: "square.and.pencil"), style: .plain, target: self, action: #selector(toggleEditMode))
             editButton.tintColor = .systemBlue
             navigationItem.rightBarButtonItem = editButton
-            floatingActionButton.isHidden = false
+            floatingActionButton.isHidden = true
             tableView.dragInteractionEnabled = false
+            for cell in tableView.visibleCells {
+                if let itemCell = cell as? ItemCell {
+                    itemCell.endEditingName()
+                }
+            }
             view.endEditing(true)
             saveAndUpdate()
         }
@@ -632,7 +638,7 @@ class ProgressView: UIView {
     }
 }
 
-class ItemCell: UITableViewCell {
+class ItemCell: UITableViewCell, UITextFieldDelegate {
     
     var onNameChanged: ((String) -> Void)?
     var onPriorityTapped: (() -> Void)?
@@ -648,6 +654,8 @@ class ItemCell: UITableViewCell {
     private let reorderImageView = UIImageView()
     
     private var isInEditingMode = false
+    private var editingOverlay: UIView?
+    private var nameLabelTapGesture: UITapGestureRecognizer?
     
     private var normalConstraints: [NSLayoutConstraint] = []
     private var editingConstraints: [NSLayoutConstraint] = []
@@ -701,10 +709,18 @@ class ItemCell: UITableViewCell {
         nameTextField.font = .systemFont(ofSize: 16, weight: .medium)
         nameTextField.textColor = UIColor(red: 33/255, green: 33/255, blue: 33/255, alpha: 1.0)
         nameTextField.borderStyle = .none
+        nameTextField.backgroundColor = .clear
+        nameTextField.returnKeyType = .done
+        nameTextField.delegate = self
         nameTextField.isHidden = true
         nameTextField.translatesAutoresizingMaskIntoConstraints = false
-        nameTextField.addTarget(self, action: #selector(nameTextFieldChanged), for: .editingChanged)
         containerView.addSubview(nameTextField)
+        
+        nameLabel.isUserInteractionEnabled = true
+        let tap = UITapGestureRecognizer(target: self, action: #selector(nameLabelTapped))
+        nameLabel.addGestureRecognizer(tap)
+        nameLabelTapGesture = tap
+        tap.isEnabled = false
         
         descriptionLabel.font = .systemFont(ofSize: 13)
         descriptionLabel.textColor = UIColor(red: 117/255, green: 117/255, blue: 117/255, alpha: 1.0)
@@ -789,10 +805,56 @@ class ItemCell: UITableViewCell {
         NSLayoutConstraint.activate(normalConstraints)
     }
     
-    @objc private func nameTextFieldChanged() {
-        if let text = nameTextField.text {
-            onNameChanged?(text)
+    @objc private func nameLabelTapped() {
+        guard isInEditingMode else { return }
+        beginEditingItemName()
+    }
+    
+    private func beginEditingItemName() {
+        nameTextField.text = nameLabel.text
+        nameTextField.isHidden = false
+        nameLabel.isHidden = true
+        nameTextField.becomeFirstResponder()
+        
+        guard let window = window else { return }
+        let overlay = UIView(frame: window.bounds)
+        overlay.backgroundColor = .clear
+        overlay.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        let tap = UITapGestureRecognizer(target: self, action: #selector(editingOverlayTapped))
+        overlay.addGestureRecognizer(tap)
+        window.addSubview(overlay)
+        editingOverlay = overlay
+    }
+    
+    @objc private func editingOverlayTapped() {
+        commitEditingItemName()
+    }
+    
+    private func commitEditingItemName() {
+        guard !nameTextField.isHidden else { return }
+        let newName = nameTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        nameTextField.isHidden = true
+        nameLabel.isHidden = false
+        nameTextField.resignFirstResponder()
+        editingOverlay?.removeFromSuperview()
+        editingOverlay = nil
+        if !newName.isEmpty && newName != nameLabel.text {
+            nameLabel.text = newName
+            onNameChanged?(newName)
         }
+    }
+    
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        commitEditingItemName()
+        return true
+    }
+    
+    func textFieldDidEndEditing(_ textField: UITextField) {
+        commitEditingItemName()
+    }
+    
+    func endEditingName() {
+        commitEditingItemName()
     }
     
     @objc private func priorityBadgeTapped() {
@@ -818,6 +880,8 @@ class ItemCell: UITableViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
+        editingOverlay?.removeFromSuperview()
+        editingOverlay = nil
         onNameChanged = nil
         onPriorityTapped = nil
         onDragHandleLongPress = nil
@@ -868,6 +932,7 @@ class ItemCell: UITableViewCell {
             descriptionLabel.isHidden = false
             priorityButton.isHidden = false
             priorityButton.isUserInteractionEnabled = true
+            nameLabelTapGesture?.isEnabled = true
             containerView.layer.borderColor = UIColor(red: 229/255, green: 229/255, blue: 229/255, alpha: 1.0).cgColor
         } else {
             NSLayoutConstraint.deactivate(editingConstraints)
@@ -884,6 +949,7 @@ class ItemCell: UITableViewCell {
             descriptionLabel.isHidden = false
             priorityButton.isHidden = false
             priorityButton.isUserInteractionEnabled = false
+            nameLabelTapGesture?.isEnabled = false
             containerView.layer.borderColor = UIColor(red: 229/255, green: 229/255, blue: 229/255, alpha: 1.0).cgColor
         }
         
