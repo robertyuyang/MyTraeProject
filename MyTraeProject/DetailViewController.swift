@@ -19,13 +19,13 @@ class DetailViewController: UIViewController {
     private var isEditingMode = false
     
     private let stackView = UIStackView()
-    private let tripNameTextField = UITextField()
     private let p0ProgressView = ProgressView()
     private let p1ProgressView = ProgressView()
     private let p2ProgressView = ProgressView()
     private let tableView = UITableView()
 
     private let floatingActionButton = UIButton(type: .system)
+    private var dropdownOverlay: UIView?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -54,20 +54,12 @@ class DetailViewController: UIViewController {
         backButton.addTarget(self, action: #selector(closeDetailView), for: .touchUpInside)
         navigationItem.leftBarButtonItem = UIBarButtonItem(customView: backButton)
         
-        let editButton = UIBarButtonItem(title: "编辑", style: .plain, target: self, action: #selector(toggleEditMode))
-        editButton.tintColor = UIColor(red: 255/255, green: 99/255, blue: 71/255, alpha: 1.0)
+        let editButton = UIBarButtonItem(image: UIImage(systemName: "square.and.pencil"), style: .plain, target: self, action: #selector(toggleEditMode))
+        editButton.tintColor = .systemBlue
         navigationItem.rightBarButtonItem = editButton
         
-        tripNameTextField.font = .systemFont(ofSize: 20, weight: .bold)
-        tripNameTextField.textColor = UIColor(red: 33/255, green: 33/255, blue: 33/255, alpha: 1.0)
-        tripNameTextField.borderStyle = .roundedRect
-        tripNameTextField.text = trip.name
-        tripNameTextField.isHidden = true
-        tripNameTextField.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(tripNameTextField)
-        
         stackView.axis = .vertical
-        stackView.spacing = 12
+        stackView.spacing = 6
         stackView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(stackView)
         
@@ -96,21 +88,19 @@ class DetailViewController: UIViewController {
         tableView.register(ItemCell.self, forCellReuseIdentifier: "ItemCell")
         tableView.delegate = self
         tableView.dataSource = self
+        tableView.dragDelegate = self
+        tableView.dropDelegate = self
+        tableView.dragInteractionEnabled = false
         tableView.separatorStyle = .none
         tableView.backgroundColor = .systemBackground
         view.addSubview(tableView)
         
         NSLayoutConstraint.activate([
-            tripNameTextField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
-            tripNameTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            tripNameTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            tripNameTextField.heightAnchor.constraint(equalToConstant: 44),
-            
-            stackView.topAnchor.constraint(equalTo: tripNameTextField.bottomAnchor, constant: 8),
+            stackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
             stackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             stackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             
-            tableView.topAnchor.constraint(equalTo: stackView.bottomAnchor, constant: 20),
+            tableView.topAnchor.constraint(equalTo: stackView.bottomAnchor, constant: 10),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
@@ -119,7 +109,7 @@ class DetailViewController: UIViewController {
         // 设置浮动操作按钮
         floatingActionButton.setImage(UIImage(systemName: "plus"), for: .normal)
         floatingActionButton.tintColor = .white
-        floatingActionButton.backgroundColor = UIColor(red: 255/255, green: 99/255, blue: 71/255, alpha: 1.0) // 红色
+        floatingActionButton.backgroundColor = .systemBlue
         floatingActionButton.layer.cornerRadius = 28
         floatingActionButton.layer.shadowColor = UIColor.black.withAlphaComponent(0.3).cgColor
         floatingActionButton.layer.shadowOffset = CGSize(width: 0, height: 4)
@@ -213,18 +203,19 @@ class DetailViewController: UIViewController {
     
     @objc private func toggleEditMode() {
         isEditingMode.toggle()
+        dismissDropdown()
         
         if isEditingMode {
-            navigationItem.rightBarButtonItem?.title = "完成"
-            tripNameTextField.isHidden = false
-            tripNameTextField.text = trip.name
+            navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "checkmark"), style: .plain, target: self, action: #selector(toggleEditMode))
+            navigationItem.rightBarButtonItem?.tintColor = .systemBlue
+            floatingActionButton.isHidden = true
+            tableView.dragInteractionEnabled = true
         } else {
-            navigationItem.rightBarButtonItem?.title = "编辑"
-            if let newName = tripNameTextField.text, !newName.isEmpty {
-                trip.name = newName
-                title = newName
-            }
-            tripNameTextField.isHidden = true
+            let editButton = UIBarButtonItem(image: UIImage(systemName: "square.and.pencil"), style: .plain, target: self, action: #selector(toggleEditMode))
+            editButton.tintColor = .systemBlue
+            navigationItem.rightBarButtonItem = editButton
+            floatingActionButton.isHidden = false
+            tableView.dragInteractionEnabled = false
             view.endEditing(true)
             saveAndUpdate()
         }
@@ -238,10 +229,102 @@ class DetailViewController: UIViewController {
         navigationController?.popViewController(animated: true)
     }
     
+    private func dismissDropdown() {
+        dropdownOverlay?.removeFromSuperview()
+        dropdownOverlay = nil
+    }
+    
+    private func showPriorityDropdown(for item: TripItem, fromCell cell: ItemCell) {
+        dismissDropdown()
+        
+        guard let window = view.window,
+              let buttonFrame = cell.priorityButtonFrameInWindow() else { return }
+        
+        let currentPriority = trip.priority(for: item)
+        
+        let overlay = UIView(frame: window.bounds)
+        overlay.backgroundColor = .clear
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dropdownOverlayTapped))
+        overlay.addGestureRecognizer(tapGesture)
+        window.addSubview(overlay)
+        dropdownOverlay = overlay
+        
+        let menuWidth: CGFloat = 40
+        let itemHeight: CGFloat = 30
+        let padding: CGFloat = 4
+        let menuHeight: CGFloat = CGFloat(Priority.allCases.count) * itemHeight + padding * 2
+        
+        let menuContainer = UIView()
+        menuContainer.backgroundColor = .white
+        menuContainer.layer.cornerRadius = 8
+        menuContainer.layer.shadowColor = UIColor.black.withAlphaComponent(0.15).cgColor
+        menuContainer.layer.shadowOffset = CGSize(width: 0, height: 2)
+        menuContainer.layer.shadowOpacity = 1
+        menuContainer.layer.shadowRadius = 8
+        menuContainer.layer.borderWidth = 0.5
+        menuContainer.layer.borderColor = UIColor(red: 220/255, green: 220/255, blue: 220/255, alpha: 1.0).cgColor
+        
+        let menuX = buttonFrame.midX - menuWidth / 2
+        let menuY = buttonFrame.maxY + 4
+        menuContainer.frame = CGRect(x: menuX, y: menuY, width: menuWidth, height: menuHeight)
+        overlay.addSubview(menuContainer)
+        
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.spacing = 2
+        stack.frame = CGRect(x: 0, y: padding, width: menuWidth, height: menuHeight - padding * 2)
+        menuContainer.addSubview(stack)
+        
+        for priority in Priority.allCases {
+            let btn = UIButton(type: .system)
+            btn.tag = priority.rawValue
+            btn.titleLabel?.font = .systemFont(ofSize: 11, weight: .bold)
+            btn.setTitle(priority.title, for: .normal)
+            btn.setTitleColor(.white, for: .normal)
+            btn.layer.cornerRadius = 4
+            btn.layer.masksToBounds = true
+            
+            switch priority {
+            case .p0:
+                btn.backgroundColor = UIColor(red: 255/255, green: 99/255, blue: 71/255, alpha: 1.0)
+            case .p1:
+                btn.backgroundColor = UIColor(red: 255/255, green: 165/255, blue: 0/255, alpha: 1.0)
+            case .p2:
+                btn.backgroundColor = UIColor(red: 0/255, green: 122/255, blue: 255/255, alpha: 1.0)
+            }
+            
+            if priority == currentPriority {
+                btn.alpha = 0.4
+            }
+            
+            btn.addAction(UIAction { [weak self] _ in
+                guard let self = self else { return }
+                self.dismissDropdown()
+                self.trip.setPriority(priority, for: item)
+                self.saveAndUpdate()
+            }, for: .touchUpInside)
+            
+            let heightConstraint = btn.heightAnchor.constraint(equalToConstant: itemHeight - 2)
+            heightConstraint.isActive = true
+            stack.addArrangedSubview(btn)
+        }
+        
+        menuContainer.transform = CGAffineTransform(scaleX: 0.8, y: 0.8).concatenating(CGAffineTransform(translationX: 0, y: -8))
+        menuContainer.alpha = 0
+        UIView.animate(withDuration: 0.2, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0.5) {
+            menuContainer.transform = .identity
+            menuContainer.alpha = 1
+        }
+    }
+    
+    @objc private func dropdownOverlayTapped() {
+        dismissDropdown()
+    }
+    
 }
 
 extension DetailViewController: UITableViewDataSource, UITableViewDelegate {
-    // 按类别对物品进行分组
+    
     private var groupedItems: [Category: [TripItem]] {
         return Dictionary(grouping: trip.items) { $0.category }
     }
@@ -283,7 +366,15 @@ extension DetailViewController: UITableViewDataSource, UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 32
+        return 30
+    }
+    
+    func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+        return nil
+    }
+    
+    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+        return 0
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -299,8 +390,8 @@ extension DetailViewController: UITableViewDataSource, UITableViewDelegate {
             }
         }
         cell.onPriorityTapped = { [weak self] in
-            guard let self = self else { return }
-            self.showPriorityPicker(for: item)
+            guard let self = self, self.isEditingMode else { return }
+            self.showPriorityDropdown(for: item, fromCell: cell)
         }
         return cell
     }
@@ -315,23 +406,9 @@ extension DetailViewController: UITableViewDataSource, UITableViewDelegate {
         saveAndUpdate()
     }
     
-    private func showPriorityPicker(for item: TripItem) {
-        let alert = UIAlertController(title: "选择优先级", message: nil, preferredStyle: .actionSheet)
-        for priority in Priority.allCases {
-            let currentPriority = trip.priority(for: item)
-            let title = priority == currentPriority ? "\(priority.title) ✓" : priority.title
-            alert.addAction(UIAlertAction(title: title, style: .default) { [weak self] _ in
-                guard let self = self else { return }
-                self.trip.setPriority(priority, for: item)
-                self.saveAndUpdate()
-            })
-        }
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-        present(alert, animated: true)
-    }
     
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        let deleteAction = UIContextualAction(style: .destructive, title: "删除") { [weak self] (_, _, completion) in
+        let deleteAction = UIContextualAction(style: .destructive, title: nil) { [weak self] (_, _, completion) in
             guard let self = self else { return }
             let category = self.sortedCategories[indexPath.section]
             let items = self.groupedItems[category]!
@@ -339,12 +416,76 @@ extension DetailViewController: UITableViewDataSource, UITableViewDelegate {
             if let index = self.trip.items.firstIndex(where: { $0.id == item.id }) {
                 self.trip.items.remove(at: index)
                 self.saveAndUpdate()
-                tableView.deleteRows(at: [indexPath], with: .automatic)
             }
             completion(true)
         }
+        deleteAction.image = UIImage(systemName: "trash.fill")
+        deleteAction.backgroundColor = UIColor(red: 239/255, green: 68/255, blue: 68/255, alpha: 1.0)
         
-        return UISwipeActionsConfiguration(actions: [deleteAction])
+        let config = UISwipeActionsConfiguration(actions: [deleteAction])
+        config.performsFirstActionWithFullSwipe = false
+        return config
+    }
+    
+    func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
+        return isEditingMode
+    }
+    
+    func tableView(_ tableView: UITableView, moveRowAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
+        let sourceCategory = sortedCategories[sourceIndexPath.section]
+        let sourceItems = groupedItems[sourceCategory]!
+        let movedItem = sourceItems[sourceIndexPath.row]
+        
+        guard let globalSourceIndex = trip.items.firstIndex(where: { $0.id == movedItem.id }) else { return }
+        trip.items.remove(at: globalSourceIndex)
+        
+        let destCategory = sortedCategories[destinationIndexPath.section]
+        let destItems = trip.items.filter { $0.category == destCategory }
+        
+        if destinationIndexPath.row >= destItems.count {
+            if let lastItem = destItems.last,
+               let insertAfter = trip.items.firstIndex(where: { $0.id == lastItem.id }) {
+                var itemToInsert = movedItem
+                itemToInsert.category = destCategory
+                trip.items.insert(itemToInsert, at: insertAfter + 1)
+            } else {
+                var itemToInsert = movedItem
+                itemToInsert.category = destCategory
+                trip.items.append(itemToInsert)
+            }
+        } else {
+            let targetItem = destItems[destinationIndexPath.row]
+            if let insertAt = trip.items.firstIndex(where: { $0.id == targetItem.id }) {
+                var itemToInsert = movedItem
+                itemToInsert.category = destCategory
+                trip.items.insert(itemToInsert, at: insertAt)
+            }
+        }
+        
+        delegate?.detailViewController(self, didUpdateTrip: trip, at: index)
+    }
+}
+
+extension DetailViewController: UITableViewDragDelegate, UITableViewDropDelegate {
+    
+    func tableView(_ tableView: UITableView, itemsForBeginning session: UIDragSession, at indexPath: IndexPath) -> [UIDragItem] {
+        let category = sortedCategories[indexPath.section]
+        let items = groupedItems[category]!
+        let item = items[indexPath.row]
+        let itemProvider = NSItemProvider(object: item.name as NSString)
+        let dragItem = UIDragItem(itemProvider: itemProvider)
+        dragItem.localObject = item
+        return [dragItem]
+    }
+    
+    func tableView(_ tableView: UITableView, dropSessionDidUpdate session: UIDropSession, withDestinationIndexPath destinationIndexPath: IndexPath?) -> UITableViewDropProposal {
+        if tableView.hasActiveDrag {
+            return UITableViewDropProposal(operation: .move, intent: .insertAtDestinationIndexPath)
+        }
+        return UITableViewDropProposal(operation: .cancel)
+    }
+    
+    func tableView(_ tableView: UITableView, performDropWith coordinator: UITableViewDropCoordinator) {
     }
 }
 
@@ -479,12 +620,18 @@ class ItemCell: UITableViewCell {
     var onPriorityTapped: (() -> Void)?
     
     private let containerView = UIView()
-    private let priorityBadge = UILabel()
+    private let dragHandleImageView = UIImageView()
+    private let priorityButton = UIButton(type: .system)
     private let nameLabel = UILabel()
     private let nameTextField = UITextField()
     private let descriptionLabel = UILabel()
     private let checkmarkImageView = UIImageView()
-    private var priorityTapGesture: UITapGestureRecognizer?
+    private let reorderImageView = UIImageView()
+    
+    private var isInEditingMode = false
+    
+    private var normalConstraints: [NSLayoutConstraint] = []
+    private var editingConstraints: [NSLayoutConstraint] = []
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -497,29 +644,35 @@ class ItemCell: UITableViewCell {
     
     private func setupUI() {
         selectionStyle = .none
+        backgroundColor = .clear
+        contentView.backgroundColor = .clear
         
-        containerView.backgroundColor = UIColor(red: 255/255, green: 255/255, blue: 255/255, alpha: 1.0)
+        containerView.backgroundColor = .white
         containerView.layer.borderWidth = 1
         containerView.layer.borderColor = UIColor(red: 229/255, green: 229/255, blue: 229/255, alpha: 1.0).cgColor
         containerView.layer.cornerRadius = 12
-        containerView.layer.shadowColor = UIColor.black.withAlphaComponent(0.1).cgColor
-        containerView.layer.shadowOffset = CGSize(width: 0, height: 2)
+        containerView.layer.shadowColor = UIColor.black.withAlphaComponent(0.06).cgColor
+        containerView.layer.shadowOffset = CGSize(width: 0, height: 1)
         containerView.layer.shadowOpacity = 1
-        containerView.layer.shadowRadius = 4
+        containerView.layer.shadowRadius = 3
         containerView.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(containerView)
         
-        priorityBadge.font = .systemFont(ofSize: 12, weight: .bold)
-        priorityBadge.textColor = .white
-        priorityBadge.textAlignment = .center
-        priorityBadge.layer.cornerRadius = 6
-        priorityBadge.layer.masksToBounds = true
-        priorityBadge.isUserInteractionEnabled = true
-        priorityBadge.translatesAutoresizingMaskIntoConstraints = false
-        let tap = UITapGestureRecognizer(target: self, action: #selector(priorityBadgeTapped))
-        priorityBadge.addGestureRecognizer(tap)
-        priorityTapGesture = tap
-        containerView.addSubview(priorityBadge)
+        dragHandleImageView.image = UIImage(systemName: "line.3.horizontal")
+        dragHandleImageView.tintColor = UIColor(red: 180/255, green: 180/255, blue: 180/255, alpha: 1.0)
+        dragHandleImageView.contentMode = .scaleAspectFit
+        dragHandleImageView.isHidden = true
+        dragHandleImageView.translatesAutoresizingMaskIntoConstraints = false
+        containerView.addSubview(dragHandleImageView)
+        
+        priorityButton.titleLabel?.font = .systemFont(ofSize: 12, weight: .bold)
+        priorityButton.layer.cornerRadius = 8
+        priorityButton.layer.borderWidth = 1
+        priorityButton.layer.masksToBounds = true
+        priorityButton.contentEdgeInsets = UIEdgeInsets(top: 4, left: 8, bottom: 4, right: 6)
+        priorityButton.translatesAutoresizingMaskIntoConstraints = false
+        priorityButton.addTarget(self, action: #selector(priorityBadgeTapped), for: .touchUpInside)
+        containerView.addSubview(priorityButton)
         
         nameLabel.font = .systemFont(ofSize: 16, weight: .medium)
         nameLabel.textColor = UIColor(red: 33/255, green: 33/255, blue: 33/255, alpha: 1.0)
@@ -528,13 +681,13 @@ class ItemCell: UITableViewCell {
         
         nameTextField.font = .systemFont(ofSize: 16, weight: .medium)
         nameTextField.textColor = UIColor(red: 33/255, green: 33/255, blue: 33/255, alpha: 1.0)
-        nameTextField.borderStyle = .roundedRect
+        nameTextField.borderStyle = .none
         nameTextField.isHidden = true
         nameTextField.translatesAutoresizingMaskIntoConstraints = false
         nameTextField.addTarget(self, action: #selector(nameTextFieldChanged), for: .editingChanged)
         containerView.addSubview(nameTextField)
         
-        descriptionLabel.font = .systemFont(ofSize: 14)
+        descriptionLabel.font = .systemFont(ofSize: 13)
         descriptionLabel.textColor = UIColor(red: 117/255, green: 117/255, blue: 117/255, alpha: 1.0)
         descriptionLabel.translatesAutoresizingMaskIntoConstraints = false
         containerView.addSubview(descriptionLabel)
@@ -544,35 +697,73 @@ class ItemCell: UITableViewCell {
         checkmarkImageView.translatesAutoresizingMaskIntoConstraints = false
         containerView.addSubview(checkmarkImageView)
         
+        reorderImageView.image = UIImage(systemName: "line.3.horizontal")
+        reorderImageView.tintColor = UIColor(red: 200/255, green: 200/255, blue: 200/255, alpha: 1.0)
+        reorderImageView.contentMode = .scaleAspectFit
+        reorderImageView.isHidden = true
+        reorderImageView.translatesAutoresizingMaskIntoConstraints = false
+        containerView.addSubview(reorderImageView)
+        
         NSLayoutConstraint.activate([
             containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 4),
-            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -4),
+            containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 3),
+            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -3),
             
-            priorityBadge.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 12),
-            priorityBadge.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-            priorityBadge.widthAnchor.constraint(equalToConstant: 36),
-            priorityBadge.heightAnchor.constraint(equalToConstant: 24),
+            dragHandleImageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 10),
+            dragHandleImageView.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
+            dragHandleImageView.widthAnchor.constraint(equalToConstant: 20),
+            dragHandleImageView.heightAnchor.constraint(equalToConstant: 20),
+        ])
+        
+        normalConstraints = [
+            priorityButton.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 12),
+            priorityButton.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
+            priorityButton.widthAnchor.constraint(equalToConstant: 36),
+            priorityButton.heightAnchor.constraint(equalToConstant: 24),
             
-            nameLabel.leadingAnchor.constraint(equalTo: priorityBadge.trailingAnchor, constant: 12),
-            nameLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 12),
-            nameLabel.trailingAnchor.constraint(equalTo: checkmarkImageView.leadingAnchor, constant: -12),
+            nameLabel.leadingAnchor.constraint(equalTo: priorityButton.trailingAnchor, constant: 10),
+            nameLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 10),
+            nameLabel.trailingAnchor.constraint(equalTo: checkmarkImageView.leadingAnchor, constant: -8),
             
-            nameTextField.leadingAnchor.constraint(equalTo: priorityBadge.trailingAnchor, constant: 12),
-            nameTextField.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 8),
-            nameTextField.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -12),
-            
-            descriptionLabel.leadingAnchor.constraint(equalTo: priorityBadge.trailingAnchor, constant: 12),
-            descriptionLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 4),
-            descriptionLabel.trailingAnchor.constraint(equalTo: checkmarkImageView.leadingAnchor, constant: -12),
-            descriptionLabel.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -12),
+            descriptionLabel.leadingAnchor.constraint(equalTo: priorityButton.trailingAnchor, constant: 10),
+            descriptionLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 2),
+            descriptionLabel.trailingAnchor.constraint(equalTo: checkmarkImageView.leadingAnchor, constant: -8),
+            descriptionLabel.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -10),
             
             checkmarkImageView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -12),
             checkmarkImageView.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
             checkmarkImageView.widthAnchor.constraint(equalToConstant: 24),
-            checkmarkImageView.heightAnchor.constraint(equalToConstant: 24)
-        ])
+            checkmarkImageView.heightAnchor.constraint(equalToConstant: 24),
+        ]
+        
+        let textLeading: CGFloat = 12 + 36 + 10
+        
+        editingConstraints = [
+            priorityButton.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 12),
+            priorityButton.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
+            priorityButton.heightAnchor.constraint(equalToConstant: 24),
+            
+            nameLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: textLeading),
+            nameLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 10),
+            nameLabel.trailingAnchor.constraint(equalTo: reorderImageView.leadingAnchor, constant: -8),
+            
+            nameTextField.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: textLeading),
+            nameTextField.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 10),
+            nameTextField.trailingAnchor.constraint(equalTo: reorderImageView.leadingAnchor, constant: -8),
+            
+            descriptionLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: textLeading),
+            descriptionLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 2),
+            descriptionLabel.trailingAnchor.constraint(equalTo: reorderImageView.leadingAnchor, constant: -8),
+            descriptionLabel.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -10),
+            
+            reorderImageView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -12),
+            reorderImageView.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
+            reorderImageView.widthAnchor.constraint(equalToConstant: 20),
+            reorderImageView.heightAnchor.constraint(equalToConstant: 20),
+        ]
+        
+        NSLayoutConstraint.activate(normalConstraints)
     }
     
     @objc private func nameTextFieldChanged() {
@@ -585,32 +776,68 @@ class ItemCell: UITableViewCell {
         onPriorityTapped?()
     }
     
+    func priorityButtonFrameInWindow() -> CGRect? {
+        return priorityButton.superview?.convert(priorityButton.frame, to: nil)
+    }
+    
     override func prepareForReuse() {
         super.prepareForReuse()
         onNameChanged = nil
         onPriorityTapped = nil
     }
     
-    func configure(with item: TripItem, priority: Priority, isChecked: Bool, isEditing: Bool = false) {
-        priorityBadge.text = priority.title
+    private func applyPriorityStyle(_ priority: Priority, isEditing: Bool) {
+        let title = priority.title
+        
+        priorityButton.setTitle(title, for: .normal)
+        priorityButton.setTitleColor(.white, for: .normal)
+        priorityButton.layer.borderWidth = 0
+        priorityButton.semanticContentAttribute = .forceRightToLeft
         
         switch priority {
         case .p0:
-            priorityBadge.backgroundColor = UIColor(red: 255/255, green: 99/255, blue: 71/255, alpha: 1.0)
+            priorityButton.backgroundColor = UIColor(red: 255/255, green: 99/255, blue: 71/255, alpha: 1.0)
         case .p1:
-            priorityBadge.backgroundColor = UIColor(red: 255/255, green: 165/255, blue: 0/255, alpha: 1.0)
+            priorityButton.backgroundColor = UIColor(red: 255/255, green: 165/255, blue: 0/255, alpha: 1.0)
         case .p2:
-            priorityBadge.backgroundColor = UIColor(red: 0/255, green: 122/255, blue: 255/255, alpha: 1.0)
+            priorityButton.backgroundColor = UIColor(red: 0/255, green: 122/255, blue: 255/255, alpha: 1.0)
         }
         
         if isEditing {
-            nameLabel.isHidden = true
-            nameTextField.isHidden = false
-            nameTextField.text = item.name
-            checkmarkImageView.isHidden = true
-            descriptionLabel.isHidden = true
-            containerView.layer.borderColor = UIColor(red: 255/255, green: 99/255, blue: 71/255, alpha: 0.5).cgColor
+            let config = UIImage.SymbolConfiguration(pointSize: 7, weight: .bold)
+            let chevron = UIImage(systemName: "chevron.down", withConfiguration: config)
+            priorityButton.setImage(chevron, for: .normal)
+            priorityButton.tintColor = .white
         } else {
+            priorityButton.setImage(nil, for: .normal)
+        }
+    }
+    
+    func configure(with item: TripItem, priority: Priority, isChecked: Bool, isEditing: Bool = false) {
+        isInEditingMode = isEditing
+        applyPriorityStyle(priority, isEditing: isEditing)
+        
+        if isEditing {
+            NSLayoutConstraint.deactivate(normalConstraints)
+            NSLayoutConstraint.activate(editingConstraints)
+            
+            dragHandleImageView.isHidden = true
+            reorderImageView.isHidden = false
+            checkmarkImageView.isHidden = true
+            nameLabel.isHidden = false
+            nameLabel.text = item.name
+            nameLabel.textColor = UIColor(red: 33/255, green: 33/255, blue: 33/255, alpha: 1.0)
+            nameTextField.isHidden = true
+            descriptionLabel.isHidden = false
+            priorityButton.isHidden = false
+            priorityButton.isUserInteractionEnabled = true
+            containerView.layer.borderColor = UIColor(red: 229/255, green: 229/255, blue: 229/255, alpha: 1.0).cgColor
+        } else {
+            NSLayoutConstraint.deactivate(editingConstraints)
+            NSLayoutConstraint.activate(normalConstraints)
+            
+            dragHandleImageView.isHidden = true
+            reorderImageView.isHidden = true
             nameLabel.isHidden = false
             nameTextField.isHidden = true
             nameLabel.attributedText = nil
@@ -618,6 +845,8 @@ class ItemCell: UITableViewCell {
             nameLabel.textColor = isChecked ? UIColor(red: 180/255, green: 180/255, blue: 180/255, alpha: 1.0) : UIColor(red: 33/255, green: 33/255, blue: 33/255, alpha: 1.0)
             checkmarkImageView.isHidden = !isChecked
             descriptionLabel.isHidden = false
+            priorityButton.isHidden = false
+            priorityButton.isUserInteractionEnabled = false
             containerView.layer.borderColor = UIColor(red: 229/255, green: 229/255, blue: 229/255, alpha: 1.0).cgColor
         }
         
