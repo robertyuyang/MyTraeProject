@@ -104,7 +104,7 @@
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
             uuid = "0F0F1E1F-EDF1-4EDD-BE38-3254F413F55C"
-            shouldBeEnabled = "Yes"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "MyTraeProject/LLMCategorizingService.swift"
@@ -120,7 +120,7 @@
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
             uuid = "27963115-F0B5-4B8E-86E0-244714B08625"
-            shouldBeEnabled = "Yes"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "MyTraeProject/LLMCategorizingService.swift"
@@ -130,9 +130,25 @@
             endingLineNumber = "69"
             landmarkName = "categorize(text:completion:)"
             landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "B9E1ADBA-AFCA-4DF8-85E5-8189BF77E6CF"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "MyTraeProject/LLMCategorizingService.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "87"
+            endingLineNumber = "87"
+            landmarkName = "categorize(text:completion:)"
+            landmarkType = "7">
             <Locations>
                <Location
-                  uuid = "27963115-F0B5-4B8E-86E0-244714B08625 - f5d0d451b1defc4e"
+                  uuid = "B9E1ADBA-AFCA-4DF8-85E5-8189BF77E6CF - f5d0d451b1dee2fc"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
@@ -142,11 +158,25 @@
                   urlString = "file:///Users/bytedance/Documents/src/mydemo/MyTraeProject/MyTraeProject/LLMCategorizingService.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "69"
-                  endingLineNumber = "69">
+                  startingLineNumber = "87"
+                  endingLineNumber = "87">
                </Location>
                <Location
-                  uuid = "27963115-F0B5-4B8E-86E0-244714B08625 - f5d0d451b1defc4e"
+                  uuid = "B9E1ADBA-AFCA-4DF8-85E5-8189BF77E6CF - 63a67c72253ec312"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #3 @Swift.MainActor () -&gt; () in closure #1 @Sendable (Swift.Optional&lt;Foundation.Data&gt;, Swift.Optional&lt;__C.NSURLResponse&gt;, Swift.Optional&lt;Swift.Error&gt;) -&gt; () in MyTraeProject.LLMCategorizingService.categorize(text: Swift.String, completion: (Swift.Result&lt;Swift.Array&lt;MyTraeProject.TripItem&gt;, Swift.Error&gt;) -&gt; ()) -&gt; ()"
+                  moduleName = "MyTraeProject.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/bytedance/Documents/src/mydemo/MyTraeProject/MyTraeProject/LLMCategorizingService.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "87"
+                  endingLineNumber = "87">
+               </Location>
+               <Location
+                  uuid = "B9E1ADBA-AFCA-4DF8-85E5-8189BF77E6CF - f5d0d451b1dee2fc"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
@@ -156,8 +186,8 @@
                   urlString = "file:///Users/bytedance/Documents/src/mydemo/MyTraeProject/MyTraeProject/LLMCategorizingService.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "69"
-                  endingLineNumber = "69">
+                  startingLineNumber = "87"
+                  endingLineNumber = "87">
                </Location>
             </Locations>
          </BreakpointContent>

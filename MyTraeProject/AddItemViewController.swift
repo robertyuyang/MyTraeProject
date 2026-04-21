@@ -675,7 +675,7 @@ class AddItemViewController: UIViewController {
             title = "添加到清单"
             icon = "plus"
         } else {
-            title = "分析并添加到清单"
+            title = "AI 分析物品"
             icon = "sparkles"
         }
 
@@ -753,8 +753,11 @@ class AddItemViewController: UIViewController {
                 if items.isEmpty {
                     self.showError("未能识别出任何物品，请重试。")
                 } else {
-                    self.delegate?.addItemViewController(self, didAddItems: items)
-                    self.navigationController?.popViewController(animated: true)
+                    let listVC = ItemListViewController()
+                    listVC.mode = .confirmation
+                    listVC.items = items
+                    listVC.delegate = self
+                    self.navigationController?.pushViewController(listVC, animated: true)
                 }
             case .failure(let error):
                 self.showError("分析失败：\(error.localizedDescription)")
@@ -817,5 +820,15 @@ extension AddItemViewController: UITextViewDelegate {
         if let placeholder = textView.superview?.viewWithTag(100) {
             placeholder.isHidden = !textView.text.isEmpty
         }
+    }
+}
+
+// MARK: - ItemListViewControllerDelegate
+
+extension AddItemViewController: ItemListViewControllerDelegate {
+    func itemListViewController(_ controller: ItemListViewController, didConfirmItems items: [TripItem]) {
+        delegate?.addItemViewController(self, didAddItems: items)
+        navigationController?.popToViewController(self, animated: false)
+        navigationController?.popViewController(animated: true)
     }
 }
