@@ -21,11 +21,11 @@ class UnsplashImageGenerator: ImageGenerating {
     func generateImage(for tripName: String, completion: @escaping (String?, Error?) -> Void) {
         translationService.translateToEnglish(tripName, mode: translationMode) { [weak self] translatedText in
             guard let self = self else { return }
-            self.searchUnsplash(with: translatedText, completion: completion)
+            self.searchUnsplash(with: translatedText, fallbackQuery: "travel landscape scenic", completion: completion)
         }
     }
 
-    private func searchUnsplash(with text: String, completion: @escaping (String?, Error?) -> Void) {
+    private func searchUnsplash(with text: String, fallbackQuery: String? = nil, completion: @escaping (String?, Error?) -> Void) {
         guard var urlComponents = URLComponents(string: "https://api.unsplash.com/search/photos") else {
             completion(nil, NSError(domain: "UnsplashImageGenerator", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"]))
             return
@@ -34,7 +34,7 @@ class UnsplashImageGenerator: ImageGenerating {
         urlComponents.queryItems = [
             URLQueryItem(name: "query", value: "\(text)"),
             URLQueryItem(name: "orientation", value: "landscape"),
-            URLQueryItem(name: "per_page", value: "1")
+            URLQueryItem(name: "per_page", value: "5")
         ]
 
         guard let url = urlComponents.url else {
@@ -46,7 +46,9 @@ class UnsplashImageGenerator: ImageGenerating {
         request.setValue("Client-ID \(accessKey)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 30
 
-        session.dataTask(with: request) { data, response, error in
+        session.dataTask(with: request) { [weak self] data, response, error in
+            guard let self = self else { return }
+            
             if let error = error {
                 completion(nil, error)
                 return
@@ -59,15 +61,25 @@ class UnsplashImageGenerator: ImageGenerating {
 
             do {
                 guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-                      let results = json["results"] as? [[String: Any]],
-                      let firstResult = results.first,
-                      let urls = firstResult["urls"] as? [String: Any],
-                      let regularUrl = urls["regular"] as? String else {
-                    completion(nil, NSError(domain: "UnsplashImageGenerator", code: -3, userInfo: [NSLocalizedDescriptionKey: "Invalid API response or no results"]))
+                      let results = json["results"] as? [[String: Any]] else {
+                    completion(nil, NSError(domain: "UnsplashImageGenerator", code: -3, userInfo: [NSLocalizedDescriptionKey: "Invalid API response"]))
                     return
                 }
-
-                completion(regularUrl, nil)
+                
+                // 如果有结果，返回第一个
+                if let firstResult = results.first,
+                   let urls = firstResult["urls"] as? [String: Any],
+                   let regularUrl = urls["regular"] as? String {
+                    completion(regularUrl, nil)
+                    return
+                }
+                
+                // 如果没有结果且有备用查询，尝试备用查询
+                if let fallback = fallbackQuery {
+                    self.searchUnsplash(with: fallback, fallbackQuery: nil, completion: completion)
+                } else {
+                    completion(nil, NSError(domain: "UnsplashImageGenerator", code: -3, userInfo: [NSLocalizedDescriptionKey: "No results found"]))
+                }
             } catch {
                 completion(nil, error)
             }

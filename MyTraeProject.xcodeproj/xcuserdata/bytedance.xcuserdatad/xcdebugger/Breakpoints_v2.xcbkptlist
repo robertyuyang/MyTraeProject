@@ -254,7 +254,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "48"
             endingLineNumber = "48"
-            landmarkName = "searchUnsplash(with:completion:)"
+            landmarkName = "searchUnsplash(with:fallbackQuery:completion:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

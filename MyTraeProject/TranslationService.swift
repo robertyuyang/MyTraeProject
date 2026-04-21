@@ -40,15 +40,85 @@ class TranslationService {
         let recognizer = NLLanguageRecognizer()
         recognizer.processString(text)
         
-        guard let language = recognizer.dominantLanguage else {
-            return text
+        let dominantLanguage = recognizer.dominantLanguage
+        let isEnglish = dominantLanguage == .english
+        
+        // 常见中文地名的英文映射 - 提高搜索成功率
+        let chineseLocationMapping: [String: String] = [
+            "北京": "Beijing",
+            "上海": "Shanghai",
+            "广州": "Guangzhou",
+            "深圳": "Shenzhen",
+            "杭州": "Hangzhou",
+            "成都": "Chengdu",
+            "西安": "Xi'an",
+            "重庆": "Chongqing",
+            "武汉": "Wuhan",
+            "南京": "Nanjing",
+            "苏州": "Suzhou",
+            "厦门": "Xiamen",
+            "三亚": "Sanya",
+            "丽江": "Lijiang",
+            "桂林": "Guilin",
+            "大理": "Dali",
+            "西藏": "Tibet",
+            "新疆": "Xinjiang",
+            "云南": "Yunnan",
+            "四川": "Sichuan",
+            "日本": "Japan",
+            "东京": "Tokyo",
+            "大阪": "Osaka",
+            "京都": "Kyoto",
+            "韩国": "Korea",
+            "首尔": "Seoul",
+            "泰国": "Thailand",
+            "曼谷": "Bangkok",
+            "新加坡": "Singapore",
+            "马来西亚": "Malaysia",
+            "印度尼西亚": "Indonesia",
+            "巴厘岛": "Bali",
+            "法国": "France",
+            "巴黎": "Paris",
+            "意大利": "Italy",
+            "罗马": "Rome",
+            "威尼斯": "Venice",
+            "英国": "United Kingdom",
+            "伦敦": "London",
+            "美国": "United States",
+            "纽约": "New York",
+            "洛杉矶": "Los Angeles",
+            "夏威夷": "Hawaii",
+            "澳大利亚": "Australia",
+            "悉尼": "Sydney",
+            "旅行": "travel",
+            "旅游": "tourism",
+            "度假": "vacation",
+            "假期": "holiday"
+        ]
+        
+        // 尝试匹配中文关键词
+        var translatedText = text
+        for (chinese, english) in chineseLocationMapping {
+            if text.contains(chinese) {
+                translatedText = text.replacingOccurrences(of: chinese, with: english)
+            }
         }
         
-        if language == .english {
-            return text
+        // 如果检测到非英文或文本包含中文字符，使用优化的搜索策略
+        let containsChinese = text.range(of: "\\p{Han}", options: .regularExpression) != nil
+        
+        if isEnglish && !containsChinese {
+            return translatedText
         }
         
-        return "travel adventure landscape \(text)"
+        // 构建更有效的搜索查询
+        if translatedText != text {
+            // 如果成功替换了一些关键词，使用翻译后的文本
+            return "\(translatedText) travel landscape"
+        } else {
+            // 否则使用通用搜索策略
+            return "travel landscape adventure scenic destination"
+        }
     }
     
     private func translateWithLLM(_ text: String, completion: @escaping (String?) -> Void) {
