@@ -1,9 +1,14 @@
 import Foundation
 
-class AIImageGenerator {
+protocol ImageGenerating {
+    func generateImage(for tripName: String, completion: @escaping (String?, Error?) -> Void)
+}
+
+class AIImageGenerator: ImageGenerating {
     init() {}
     
-    func generateImage(for prompt: String, completion: @escaping (String?, Error?) -> Void) {
+    func generateImage(for tripName: String, completion: @escaping (String?, Error?) -> Void) {
+        let prompt = "横版风景照片，与'\(tripName)'相关的旅行场景，高清，真实感"
         // 使用Z-Image免费AI图片生成服务
         // 完全免费，无需API密钥
         let baseURL = "https://zimage.run/api/generate"

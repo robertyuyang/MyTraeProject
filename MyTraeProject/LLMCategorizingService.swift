@@ -63,7 +63,7 @@ class LLMCategorizingService: TextCategorizingService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.httpBody = bodyData
-        request.timeoutInterval = 30
+        request.timeoutInterval = 120
 
         session.dataTask(with: request) { data, response, error in
             if let error = error {

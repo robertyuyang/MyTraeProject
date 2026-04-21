@@ -10,25 +10,29 @@ import UIKit
 
 class TripViewModel {
     private var trips: [Trip] = []
-    private let imageGenerator = AIImageGenerator()
+    private let imageGenerator: ImageGenerating
     
-    // 闭包用于通知视图控制器数据变化
     var reloadData: (() -> Void)?
     var reloadRow: ((Int) -> Void)?
     
-    init() {
+    init(imageGenerator: ImageGenerating = UnsplashImageGenerator()) {
+        self.imageGenerator = imageGenerator
         loadData()
     }
     
     // 加载数据
     func loadData() {
         trips = DataManager.shared.loadTrips()
-        // 如果没有数据，加载示例数据
         if trips.isEmpty {
             loadSampleData()
         }
+        sortTrips()
         reloadData?()
         generateMissingImages()
+    }
+
+    private func sortTrips() {
+        trips.sort { $0.createdAt > $1.createdAt }
     }
     
     // 加载示例数据
@@ -74,7 +78,10 @@ class TripViewModel {
         }
         urbanTrip.checkedItemIDs.insert(urbanTrip.items[0].id)
         
-        // 添加到数组
+        coastalTrip.createdAt = Date(timeIntervalSinceNow: -7200)
+        wineTrip.createdAt = Date(timeIntervalSinceNow: -3600)
+        urbanTrip.createdAt = Date()
+
         trips = [coastalTrip, wineTrip, urbanTrip]
         
         // 保存到UserDefaults
@@ -85,8 +92,7 @@ class TripViewModel {
     func generateMissingImages() {
         for (index, trip) in trips.enumerated() {
             if trip.imageUrl == nil {
-                let prompt = "横版风景照片，与'\(trip.name)'相关的旅行场景，高清，真实感"
-                imageGenerator.generateImage(for: prompt) { [weak self] imageUrl, error in
+                imageGenerator.generateImage(for: trip.name) { [weak self] imageUrl, error in
                     guard let self = self, let imageUrl = imageUrl else { return }
                     
                     DispatchQueue.main.async {
@@ -111,13 +117,12 @@ class TripViewModel {
         var newTrip = Trip(name: name)
         
         // 生成与旅行名称相关的图片
-        let prompt = "横版风景照片，与'\(name)'相关的旅行场景，高清，真实感"
-        imageGenerator.generateImage(for: prompt) { [weak self] imageUrl, error in
+        imageGenerator.generateImage(for: name) { [weak self] imageUrl, error in
             DispatchQueue.main.async {
                 if let imageUrl = imageUrl {
                     newTrip.imageUrl = imageUrl
                 }
-                self?.trips.append(newTrip)
+                self?.trips.insert(newTrip, at: 0)
                 self?.saveData()
                 self?.reloadData?()
                 completion()
@@ -145,7 +150,7 @@ class TripViewModel {
         var copiedTrip = Trip(name: originalTrip.name + " (副本)")
         copiedTrip.items = originalTrip.items
         copiedTrip.imageUrl = originalTrip.imageUrl
-        trips.insert(copiedTrip, at: index + 1)
+        trips.insert(copiedTrip, at: 0)
         saveData()
         reloadData?()
     }

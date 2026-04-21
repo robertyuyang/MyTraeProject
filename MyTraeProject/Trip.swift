@@ -84,6 +84,7 @@ struct Trip: Codable, Equatable {
     var checkedItemIDs: Set<UUID>
     var priorityOverrides: [UUID: Priority]
     var imageUrl: String?
+    var createdAt: Date
     
     init(name: String) {
         self.id = UUID()
@@ -92,6 +93,7 @@ struct Trip: Codable, Equatable {
         self.checkedItemIDs = []
         self.priorityOverrides = [:]
         self.imageUrl = nil
+        self.createdAt = Date()
     }
     
     func isItemChecked(_ item: TripItem) -> Bool {
