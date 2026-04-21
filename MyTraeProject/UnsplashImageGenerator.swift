@@ -9,7 +9,7 @@ class UnsplashImageGenerator: ImageGenerating {
     init(
         accessKey: String = "HVaMC8KaE2AiSMD1JxRahZ8brKZf9MFgZTL59O96eys",
         translationService: TranslationService = TranslationService(),
-        translationMode: TranslationService.Mode = .appleNaturalLanguage,
+        translationMode: TranslationService.Mode = .llm,
         session: URLSession = .shared
     ) {
         self.accessKey = accessKey

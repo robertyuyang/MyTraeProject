@@ -11,6 +11,7 @@ class TripsViewController2: UIViewController {
     
     private let tableView = UITableView()
     private let viewModel = TripViewModel()
+    private let loadingView = LoadingView()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -190,7 +191,13 @@ class TripsViewController2: UIViewController {
         let confirmAction = UIAlertAction(title: "Create", style: .default) { [weak self] _ in
             guard let self = self, let tripName = alert.textFields?.first?.text, !tripName.isEmpty else { return }
             
-            self.viewModel.createNewTrip(name: tripName) {}
+            // 显示loading
+            self.loadingView.show(in: self.view, message: "Creating trip...")
+            
+            self.viewModel.createNewTrip(name: tripName) {
+                // 创建完成，隐藏loading
+                self.loadingView.hide()
+            }
         }
         
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
