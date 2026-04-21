@@ -39,7 +39,7 @@ class NaturalLanguageInputViewController: UIViewController {
     
     private func setupUI() {
         title = "智能添加物品"
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = .white
         
         navigationItem.leftBarButtonItem = UIBarButtonItem(
             barButtonSystemItem: .cancel,

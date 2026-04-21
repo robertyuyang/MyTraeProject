@@ -17,6 +17,7 @@ class DetailViewController: UIViewController {
     var index: Int!
     
     private var isEditingMode = false
+    private var pendingCategoryItem: TripItem?
     
     private let stackView = UIStackView()
     private let p0ProgressView = ProgressView()
@@ -36,11 +37,11 @@ class DetailViewController: UIViewController {
     
     private func setupUI() {
         title = trip.name
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = .white
         
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = .systemBackground
+        appearance.backgroundColor = .white
         appearance.shadowColor = .clear
         navigationController?.navigationBar.standardAppearance = appearance
         navigationController?.navigationBar.scrollEdgeAppearance = appearance
@@ -240,6 +241,32 @@ extension DetailViewController: ItemListViewControllerDelegate {
         syncFromItemListVC()
         updateProgress()
         delegate?.detailViewController(self, didUpdateTrip: trip, at: index)
+    }
+
+    func itemListViewController(_ controller: ItemListViewController, didRequestNewCategoryForItem item: TripItem) {
+        presentCategoryPicker(for: item)
+    }
+}
+
+extension DetailViewController: CategoryPickerViewControllerDelegate {
+    func categoryPickerViewController(_ controller: CategoryPickerViewController, didSelectCategory category: Category) {
+        controller.dismiss(animated: true)
+        itemListVC.moveItemToCategory(pendingCategoryItem!, category: category)
+        saveAndUpdate()
+        pendingCategoryItem = nil
+    }
+
+    func categoryPickerViewControllerDidCancel(_ controller: CategoryPickerViewController) {
+        controller.dismiss(animated: true)
+        pendingCategoryItem = nil
+    }
+
+    private func presentCategoryPicker(for item: TripItem) {
+        pendingCategoryItem = item
+        let picker = CategoryPickerViewController()
+        picker.delegate = self
+        picker.selectedCategory = item.category
+        present(picker, animated: true)
     }
 }
 
