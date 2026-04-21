@@ -146,36 +146,6 @@
             endingLineNumber = "87"
             landmarkName = "categorize(text:completion:)"
             landmarkType = "7">
-            <Locations>
-               <Location
-                  uuid = "B9E1ADBA-AFCA-4DF8-85E5-8189BF77E6CF - f5d0d451b1dee2fc"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "closure #1 @Sendable (Swift.Optional&lt;Foundation.Data&gt;, Swift.Optional&lt;__C.NSURLResponse&gt;, Swift.Optional&lt;Swift.Error&gt;) -&gt; () in MyTraeProject.LLMCategorizingService.categorize(text: Swift.String, completion: (Swift.Result&lt;Swift.Array&lt;MyTraeProject.TripItem&gt;, Swift.Error&gt;) -&gt; ()) -&gt; ()"
-                  moduleName = "MyTraeProject.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/bytedance/Documents/src/mydemo/MyTraeProject/MyTraeProject/LLMCategorizingService.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "87"
-                  endingLineNumber = "87">
-               </Location>
-               <Location
-                  uuid = "B9E1ADBA-AFCA-4DF8-85E5-8189BF77E6CF - f5d0d451b1dee2fc"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "closure #1 @Sendable (Swift.Optional&lt;Foundation.Data&gt;, Swift.Optional&lt;__C.NSURLResponse&gt;, Swift.Optional&lt;Swift.Error&gt;) -&gt; () in MyTraeProject.LLMCategorizingService.categorize(text: Swift.String, completion: (Swift.Result&lt;Swift.Array&lt;MyTraeProject.TripItem&gt;, Swift.Error&gt;) -&gt; ()) -&gt; ()"
-                  moduleName = "MyTraeProject.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/bytedance/Documents/src/mydemo/MyTraeProject/MyTraeProject/LLMCategorizingService.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "87"
-                  endingLineNumber = "87">
-               </Location>
-            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -252,7 +222,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "15"
             endingLineNumber = "15"
-            landmarkName = "generateImage(for:completion:)"
+            landmarkName = "init(accessKey:translationService:translationMode:session:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -268,38 +238,8 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "16"
             endingLineNumber = "16"
-            landmarkName = "generateImage(for:completion:)"
+            landmarkName = "init(accessKey:translationService:translationMode:session:)"
             landmarkType = "7">
-            <Locations>
-               <Location
-                  uuid = "59293017-712D-4839-B4E6-CFD65D926546 - ba9c1c64f3389729"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "MyTraeProject.UnsplashImageGenerator.generateImage(for: Swift.String, completion: (Swift.Optional&lt;Swift.String&gt;, Swift.Optional&lt;Swift.Error&gt;) -&gt; ()) -&gt; ()"
-                  moduleName = "MyTraeProject.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/bytedance/Documents/src/mydemo/MyTraeProject/MyTraeProject/UnsplashImageGenerator.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "16"
-                  endingLineNumber = "16">
-               </Location>
-               <Location
-                  uuid = "59293017-712D-4839-B4E6-CFD65D926546 - ba9c1c64f3389729"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "MyTraeProject.UnsplashImageGenerator.generateImage(for: Swift.String, completion: (Swift.Optional&lt;Swift.String&gt;, Swift.Optional&lt;Swift.Error&gt;) -&gt; ()) -&gt; ()"
-                  moduleName = "MyTraeProject.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/bytedance/Documents/src/mydemo/MyTraeProject/MyTraeProject/UnsplashImageGenerator.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "16"
-                  endingLineNumber = "16">
-               </Location>
-            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -314,7 +254,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "48"
             endingLineNumber = "48"
-            landmarkName = "generateImage(for:completion:)"
+            landmarkName = "searchUnsplash(with:completion:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
