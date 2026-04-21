@@ -37,6 +37,8 @@ class LLMCategorizingService: TextCategorizingService {
         你需要：
         1. 从文本中提取每个物品
         2. 为每个物品判断优先级：P0（必须带）、P1（建议带）、P2（可选）
+           - P0 仅用于明确必须携带的物品（如证件、机票、钥匙等），用户明确表达"必须""一定要带"等强烈意愿时才给 P0
+           - 如果无法明确判断物品的优先级，默认给 P1
         3. 为每个物品分配一个分类，只能从以下分类中选择：\(categories)
 
         请严格以 JSON 数组格式返回结果，不要包含任何其他文字，格式如下：
@@ -113,8 +115,8 @@ class LLMCategorizingService: TextCategorizingService {
         return array.compactMap { dict -> TripItem? in
             guard let name = dict["name"] as? String, !name.isEmpty else { return nil }
 
-            let priorityRaw = dict["priority"] as? Int ?? 2
-            let priority = Priority(rawValue: priorityRaw) ?? .p2
+            let priorityRaw = dict["priority"] as? Int ?? 1
+            let priority = Priority(rawValue: priorityRaw) ?? .p1
 
             let category = dict["category"] as? String ?? BuiltInCategory.other
             let validCategory = BuiltInCategory.allCases.contains(category) ? category : BuiltInCategory.other
