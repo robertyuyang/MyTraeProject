@@ -114,7 +114,16 @@ class TripViewModel {
     
     // 创建新旅行
     func createNewTrip(name: String, completion: @escaping () -> Void) {
-        var newTrip = Trip(name: name)
+        let templates = DataManager.shared.loadTemplates()
+        let defaultTemplate = templates.first { $0.name == "默认旅行模板" }
+        var newTrip: Trip
+        
+        if let template = defaultTemplate {
+            newTrip = template.toTrip()
+            newTrip.name = name
+        } else {
+            newTrip = Trip(name: name)
+        }
         
         // 生成与旅行名称相关的图片
         imageGenerator.generateImage(for: name) { [weak self] imageUrl, error in
