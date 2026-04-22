@@ -114,26 +114,54 @@ class TripViewModel {
     
     // 创建新旅行
     func createNewTrip(name: String, completion: @escaping () -> Void) {
+        print("🚀 [创建Trip] ==================================")
+        print("🚀 [创建Trip] 开始创建新 Trip")
+        print("🚀 [创建Trip] Trip 名称: \"\(name)\"")
+        
         let templates = DataManager.shared.loadTemplates()
         let defaultTemplate = templates.first { $0.name == "默认旅行模板" }
         var newTrip: Trip
         
         if let template = defaultTemplate {
+            print("🚀 [创建Trip] 使用默认模板")
             newTrip = template.toTrip()
             newTrip.name = name
         } else {
+            print("🚀 [创建Trip] 未找到默认模板，创建空白 Trip")
             newTrip = Trip(name: name)
         }
+        
+        print("🚀 [创建Trip] 准备生成图片...")
         
         // 生成与旅行名称相关的图片
         imageGenerator.generateImage(for: name) { [weak self] imageUrl, error in
             DispatchQueue.main.async {
                 if let imageUrl = imageUrl {
+                    print("🚀 [创建Trip] ✅ 图片生成成功: \(imageUrl)")
                     newTrip.imageUrl = imageUrl
+                } else if let error = error {
+                    print("🚀 [创建Trip] ❌ 图片生成失败: \(error)")
+                } else {
+                    print("🚀 [创建Trip] ⚠️ 未获取到图片")
                 }
-                self?.trips.insert(newTrip, at: 0)
-                self?.saveData()
-                self?.reloadData?()
+                
+                guard let self = self else {
+                    print("🚀 [创建Trip] ❌ self 已释放")
+                    return
+                }
+                
+                self.trips.insert(newTrip, at: 0)
+                print("🚀 [创建Trip] Trip 已添加到列表")
+                
+                self.saveData()
+                print("🚀 [创建Trip] 数据已保存")
+                
+                self.reloadData?()
+                print("🚀 [创建Trip] UI 已刷新")
+                
+                print("🚀 [创建Trip] ✅ Trip 创建完成!")
+                print("🚀 [创建Trip] ==================================")
+                
                 completion()
             }
         }
