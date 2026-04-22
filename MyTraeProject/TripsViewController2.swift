@@ -46,9 +46,6 @@ class TripsViewController2: UIViewController {
         // 设置表格视图
         setupTableView()
         
-        // 添加底部导航栏
-        setupBottomNavBar()
-        
         // 添加浮动操作按钮
         setupFloatingActionButton()
     }
@@ -77,89 +74,15 @@ class TripsViewController2: UIViewController {
         tableView.dataSource = self
         tableView.separatorStyle = .none
         tableView.backgroundColor = .clear
-        tableView.contentInset = UIEdgeInsets(top: 8, left: 0, bottom: 100, right: 0) // 为底部导航栏留出空间
+        tableView.contentInset = UIEdgeInsets(top: 8, left: 0, bottom: 100, right: 0)
         view.addSubview(tableView)
         
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 56), // 为页面标题留出空间
+            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 56),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
-    }
-    
-    private func setupBottomNavBar() {
-        let tabBarView = UIView()
-        tabBarView.backgroundColor = .white
-        tabBarView.layer.borderWidth = 1.0
-        tabBarView.layer.borderColor = UIColor.lightGray.withAlphaComponent(0.3).cgColor
-        tabBarView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(tabBarView)
-        
-        // 使用StackView来管理三个标签项
-        let stackView = UIStackView()
-        stackView.axis = .horizontal
-        stackView.distribution = .fillEqually
-        stackView.alignment = .center
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        tabBarView.addSubview(stackView)
-        
-        // 添加三个标签项
-        let tripsItem = createTabBarItem(title: "Trips", isSelected: true)
-        let templatesItem = createTabBarItem(title: "Templates", isSelected: false)
-        let settingsItem = createTabBarItem(title: "Settings", isSelected: false)
-        
-        stackView.addArrangedSubview(tripsItem)
-        stackView.addArrangedSubview(templatesItem)
-        stackView.addArrangedSubview(settingsItem)
-        
-        NSLayoutConstraint.activate([
-            tabBarView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            tabBarView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            tabBarView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            tabBarView.heightAnchor.constraint(equalToConstant: 80),
-            
-            stackView.leadingAnchor.constraint(equalTo: tabBarView.leadingAnchor),
-            stackView.trailingAnchor.constraint(equalTo: tabBarView.trailingAnchor),
-            stackView.topAnchor.constraint(equalTo: tabBarView.topAnchor, constant: 8),
-            stackView.bottomAnchor.constraint(equalTo: tabBarView.bottomAnchor, constant: -8)
-        ])
-    }
-    
-    private func createTabBarItem(title: String, isSelected: Bool) -> UIStackView {
-        let stackView = UIStackView()
-        stackView.axis = .vertical
-        stackView.alignment = .center
-        stackView.spacing = 4
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        
-        let imageView = UIImageView()
-        let label = UILabel()
-        
-        // 设置图标
-        switch title {
-        case "Trips":
-            imageView.image = UIImage(systemName: "suitcase")
-        case "Templates":
-            imageView.image = UIImage(systemName: "doc.text")
-        case "Settings":
-            imageView.image = UIImage(systemName: "gear")
-        default:
-            imageView.image = UIImage(systemName: "circle")
-        }
-        
-        // 设置颜色
-        let color = isSelected ? UIColor.systemBlue : UIColor.secondaryLabel
-        imageView.tintColor = color
-        label.textColor = color
-        
-        label.text = title
-        label.font = UIFont.systemFont(ofSize: 12, weight: .medium)
-        
-        stackView.addArrangedSubview(imageView)
-        stackView.addArrangedSubview(label)
-        
-        return stackView
     }
     
     private func setupFloatingActionButton() {
@@ -175,7 +98,7 @@ class TripsViewController2: UIViewController {
         
         NSLayoutConstraint.activate([
             addButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            addButton.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -100), // 调整位置，避免被底部导航栏遮挡
+            addButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
             addButton.widthAnchor.constraint(equalToConstant: 60),
             addButton.heightAnchor.constraint(equalToConstant: 60)
         ])
@@ -302,8 +225,29 @@ extension TripsViewController2 {
     }
     
     private func handleSaveAsTemplate(at index: Int) {
-        let alert = UIAlertController(title: "Saved", message: "Trip saved as template.", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        let trip = viewModel.trip(at: index)
+        let alert = UIAlertController(title: "Save as Template", message: "Enter template name", preferredStyle: .alert)
+        alert.addTextField { textField in
+            textField.text = trip.name
+        }
+        
+        let confirmAction = UIAlertAction(title: "Save", style: .default) { [weak self] _ in
+            guard let self = self, let templateName = alert.textFields?.first?.text, !templateName.isEmpty else { return }
+            
+            let template = trip.toTemplate(name: templateName)
+            var templates = DataManager.shared.loadTemplates()
+            templates.insert(template, at: 0)
+            DataManager.shared.saveTemplates(templates)
+            
+            let successAlert = UIAlertController(title: "Saved", message: "Trip saved as template successfully!", preferredStyle: .alert)
+            successAlert.addAction(UIAlertAction(title: "OK", style: .default))
+            self.present(successAlert, animated: true)
+        }
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        
+        alert.addAction(confirmAction)
+        alert.addAction(cancelAction)
         present(alert, animated: true)
     }
     

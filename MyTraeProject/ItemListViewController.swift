@@ -8,6 +8,7 @@ protocol ItemListViewControllerDelegate: AnyObject {
     func itemListViewController(_ controller: ItemListViewController, didReorderItems items: [TripItem])
     func itemListViewController(_ controller: ItemListViewController, didChangePriorityForItem item: TripItem, to priority: Priority)
     func itemListViewController(_ controller: ItemListViewController, didRequestNewCategoryForItem item: TripItem)
+    func itemListViewControllerDidRequestAddItem(_ controller: ItemListViewController)
 }
 
 extension ItemListViewControllerDelegate {
@@ -18,6 +19,7 @@ extension ItemListViewControllerDelegate {
     func itemListViewController(_ controller: ItemListViewController, didReorderItems items: [TripItem]) {}
     func itemListViewController(_ controller: ItemListViewController, didChangePriorityForItem item: TripItem, to priority: Priority) {}
     func itemListViewController(_ controller: ItemListViewController, didRequestNewCategoryForItem item: TripItem) {}
+    func itemListViewControllerDidRequestAddItem(_ controller: ItemListViewController) {}
 }
 
 enum ItemListMode {
@@ -34,7 +36,16 @@ class ItemListViewController: UIViewController {
         didSet { tableView.reloadData() }
     }
     var isEditingMode: Bool = false {
-        didSet { tableView.reloadData() }
+        didSet {
+            tableView.reloadData()
+            updateFloatingActionButtonVisibility()
+            tableView.dragInteractionEnabled = isEditingMode
+        }
+    }
+    var showsAddButton: Bool = true {
+        didSet {
+            updateFloatingActionButtonVisibility()
+        }
     }
 
     var checkedItemIDs: Set<UUID> = []
@@ -43,12 +54,17 @@ class ItemListViewController: UIViewController {
     let tableView = UITableView()
     private var dropdownOverlay: UIView?
     private var tableViewBottomConstraint: NSLayoutConstraint?
+    private var isConfirmationMode = false
 
     private let newCategoryDropZone = UIView()
     private let dropZoneLabel = UILabel()
     private let dropZoneIcon = UIImageView()
     private var dropZoneHeightConstraint: NSLayoutConstraint?
+    private var dropZoneBottomConstraint: NSLayoutConstraint?
     private var pendingDropItem: TripItem?
+    private var bottomBar: UIView?
+    
+    private let floatingActionButton = UIButton(type: .system)
 
     private let confirmButton = UIButton(type: .system)
     private let themeBlue = UIColor(red: 0/255, green: 88/255, blue: 188/255, alpha: 1.0)
@@ -58,6 +74,7 @@ class ItemListViewController: UIViewController {
         view.backgroundColor = .white
         setupDropZone()
         setupTableView()
+        setupFloatingActionButton()
         if mode == .confirmation {
             setupConfirmationUI()
         }
@@ -90,10 +107,11 @@ class ItemListViewController: UIViewController {
         newCategoryDropZone.addInteraction(dropInteraction)
 
         dropZoneHeightConstraint = newCategoryDropZone.heightAnchor.constraint(equalToConstant: 80)
+        dropZoneBottomConstraint = newCategoryDropZone.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -8)
         NSLayoutConstraint.activate([
             newCategoryDropZone.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             newCategoryDropZone.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            newCategoryDropZone.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -8),
+            dropZoneBottomConstraint!,
             dropZoneHeightConstraint!,
 
             dropZoneIcon.centerXAnchor.constraint(equalTo: newCategoryDropZone.centerXAnchor),
@@ -124,13 +142,47 @@ class ItemListViewController: UIViewController {
             tableViewBottomConstraint!,
         ])
     }
+    
+    private func setupFloatingActionButton() {
+        floatingActionButton.setImage(UIImage(systemName: "plus"), for: .normal)
+        floatingActionButton.tintColor = .white
+        floatingActionButton.backgroundColor = .systemBlue
+        floatingActionButton.layer.cornerRadius = 28
+        floatingActionButton.layer.shadowColor = UIColor.black.withAlphaComponent(0.3).cgColor
+        floatingActionButton.layer.shadowOffset = CGSize(width: 0, height: 4)
+        floatingActionButton.layer.shadowOpacity = 1
+        floatingActionButton.layer.shadowRadius = 8
+        floatingActionButton.translatesAutoresizingMaskIntoConstraints = false
+        floatingActionButton.addTarget(self, action: #selector(addButtonTapped), for: .touchUpInside)
+        floatingActionButton.isHidden = true
+        view.addSubview(floatingActionButton)
+        
+        NSLayoutConstraint.activate([
+            floatingActionButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            floatingActionButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+            floatingActionButton.widthAnchor.constraint(equalToConstant: 56),
+            floatingActionButton.heightAnchor.constraint(equalToConstant: 56),
+        ])
+    }
+    
+    private func updateFloatingActionButtonVisibility() {
+        floatingActionButton.isHidden = !(isEditingMode && showsAddButton)
+    }
+    
+    @objc private func addButtonTapped() {
+        delegate?.itemListViewControllerDidRequestAddItem(self)
+    }
 
     func showDropZone() {
         // 延迟执行避免与 table view 拖动冲突
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
             guard let self = self else { return }
+            self.view.bringSubviewToFront(self.newCategoryDropZone)
             self.newCategoryDropZone.isHidden = false
-            self.tableViewBottomConstraint?.constant = -88
+            self.floatingActionButton.isHidden = true
+            if !self.isConfirmationMode {
+                self.tableViewBottomConstraint?.constant = -88
+            }
             UIView.animate(withDuration: 0.3, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0.5) {
                 self.newCategoryDropZone.alpha = 1
                 self.view.layoutIfNeeded()
@@ -141,11 +193,14 @@ class ItemListViewController: UIViewController {
     func hideDropZone() {
         UIView.animate(withDuration: 0.25, animations: {
             self.newCategoryDropZone.alpha = 0
-            self.tableViewBottomConstraint?.constant = 0
+            if !self.isConfirmationMode {
+                self.tableViewBottomConstraint?.constant = 0
+            }
             self.view.layoutIfNeeded()
         }) { _ in
             self.newCategoryDropZone.isHidden = true
             self.resetDropZoneAppearance()
+            self.updateFloatingActionButtonVisibility()
         }
     }
 
@@ -189,6 +244,7 @@ class ItemListViewController: UIViewController {
     }
 
     private func setupConfirmationUI() {
+        isConfirmationMode = true
         title = "确认物品清单"
         navigationController?.setNavigationBarHidden(false, animated: false)
         view.backgroundColor = UIColor(red: 250/255, green: 249/255, blue: 254/255, alpha: 1.0)
@@ -200,25 +256,22 @@ class ItemListViewController: UIViewController {
         backButton.addTarget(self, action: #selector(dismissSelf), for: .touchUpInside)
         navigationItem.leftBarButtonItem = UIBarButtonItem(customView: backButton)
 
-        isEditingMode = true
-        tableView.dragInteractionEnabled = true
-
-        let bottomBar = UIView()
-        bottomBar.backgroundColor = UIColor(red: 250/255, green: 249/255, blue: 254/255, alpha: 0.8)
-        bottomBar.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(bottomBar)
+        bottomBar = UIView()
+        bottomBar!.backgroundColor = UIColor(red: 250/255, green: 249/255, blue: 254/255, alpha: 0.8)
+        bottomBar!.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(bottomBar!)
 
         let blurEffect = UIBlurEffect(style: .light)
         let blurView = UIVisualEffectView(effect: blurEffect)
         blurView.translatesAutoresizingMaskIntoConstraints = false
-        bottomBar.insertSubview(blurView, at: 0)
+        bottomBar!.insertSubview(blurView, at: 0)
 
         confirmButton.backgroundColor = themeBlue
         confirmButton.layer.cornerRadius = 9999
         confirmButton.clipsToBounds = false
         confirmButton.translatesAutoresizingMaskIntoConstraints = false
         confirmButton.addTarget(self, action: #selector(confirmTapped), for: .touchUpInside)
-        bottomBar.addSubview(confirmButton)
+        bottomBar!.addSubview(confirmButton)
 
         var config = UIButton.Configuration.plain()
         config.baseForegroundColor = .white
@@ -239,25 +292,35 @@ class ItemListViewController: UIViewController {
         confirmButton.layer.insertSublayer(shadowLayer, at: 0)
 
         tableViewBottomConstraint?.isActive = false
-        tableViewBottomConstraint = tableView.bottomAnchor.constraint(equalTo: bottomBar.topAnchor)
+        tableViewBottomConstraint = tableView.bottomAnchor.constraint(equalTo: bottomBar!.topAnchor)
         tableViewBottomConstraint?.isActive = true
 
+        dropZoneBottomConstraint?.isActive = false
+        dropZoneBottomConstraint = newCategoryDropZone.bottomAnchor.constraint(equalTo: bottomBar!.topAnchor, constant: -8)
+        dropZoneBottomConstraint?.isActive = true
+
+        view.bringSubviewToFront(newCategoryDropZone)
+
         NSLayoutConstraint.activate([
-            bottomBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            bottomBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            bottomBar.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            bottomBar.heightAnchor.constraint(equalToConstant: 100),
+            bottomBar!.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            bottomBar!.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            bottomBar!.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            bottomBar!.heightAnchor.constraint(equalToConstant: 100),
 
-            blurView.topAnchor.constraint(equalTo: bottomBar.topAnchor),
-            blurView.leadingAnchor.constraint(equalTo: bottomBar.leadingAnchor),
-            blurView.trailingAnchor.constraint(equalTo: bottomBar.trailingAnchor),
-            blurView.bottomAnchor.constraint(equalTo: bottomBar.bottomAnchor),
+            blurView.topAnchor.constraint(equalTo: bottomBar!.topAnchor),
+            blurView.leadingAnchor.constraint(equalTo: bottomBar!.leadingAnchor),
+            blurView.trailingAnchor.constraint(equalTo: bottomBar!.trailingAnchor),
+            blurView.bottomAnchor.constraint(equalTo: bottomBar!.bottomAnchor),
 
-            confirmButton.topAnchor.constraint(equalTo: bottomBar.topAnchor, constant: 16),
-            confirmButton.leadingAnchor.constraint(equalTo: bottomBar.leadingAnchor, constant: 24),
-            confirmButton.trailingAnchor.constraint(equalTo: bottomBar.trailingAnchor, constant: -24),
+            confirmButton.topAnchor.constraint(equalTo: bottomBar!.topAnchor, constant: 16),
+            confirmButton.leadingAnchor.constraint(equalTo: bottomBar!.leadingAnchor, constant: 24),
+            confirmButton.trailingAnchor.constraint(equalTo: bottomBar!.trailingAnchor, constant: -24),
             confirmButton.heightAnchor.constraint(equalToConstant: 60),
         ])
+
+        isEditingMode = true
+        showsAddButton = false
+        tableView.dragInteractionEnabled = true
     }
 
     func priority(for item: TripItem) -> Priority {
@@ -553,11 +616,6 @@ extension ItemListViewController: UITableViewDragDelegate, UITableViewDropDelega
 
     func tableView(_ tableView: UITableView, itemsForBeginning session: UIDragSession, at indexPath: IndexPath) -> [UIDragItem] {
         guard isEditingMode else { return [] }
-        let touchPoint = session.location(in: tableView.cellForRow(at: indexPath)!)
-        guard let cell = tableView.cellForRow(at: indexPath) as? ItemCell,
-              cell.isDragHandleHit(point: touchPoint) else {
-            return []
-        }
         let category = sortedCategories[indexPath.section]
         let itemsInCategory = groupedItems[category]!
         let item = itemsInCategory[indexPath.row]

@@ -24,7 +24,6 @@ class DetailViewController: UIViewController {
     private let p1ProgressView = ProgressView()
     private let p2ProgressView = ProgressView()
 
-    private let floatingActionButton = UIButton(type: .system)
     private var itemListVC: ItemListViewController!
     
     override func viewDidLoad() {
@@ -88,26 +87,6 @@ class DetailViewController: UIViewController {
             stackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             stackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
         ])
-        
-        floatingActionButton.setImage(UIImage(systemName: "plus"), for: .normal)
-        floatingActionButton.tintColor = .white
-        floatingActionButton.backgroundColor = .systemBlue
-        floatingActionButton.layer.cornerRadius = 28
-        floatingActionButton.layer.shadowColor = UIColor.black.withAlphaComponent(0.3).cgColor
-        floatingActionButton.layer.shadowOffset = CGSize(width: 0, height: 4)
-        floatingActionButton.layer.shadowOpacity = 1
-        floatingActionButton.layer.shadowRadius = 8
-        floatingActionButton.translatesAutoresizingMaskIntoConstraints = false
-        floatingActionButton.addTarget(self, action: #selector(addNewItem), for: .touchUpInside)
-        floatingActionButton.isHidden = true
-        view.addSubview(floatingActionButton)
-        
-        NSLayoutConstraint.activate([
-            floatingActionButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            floatingActionButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
-            floatingActionButton.widthAnchor.constraint(equalToConstant: 56),
-            floatingActionButton.heightAnchor.constraint(equalToConstant: 56)
-        ])
     }
     
     private func setupItemListVC() {
@@ -120,7 +99,7 @@ class DetailViewController: UIViewController {
 
         addChild(itemListVC)
         itemListVC.view.translatesAutoresizingMaskIntoConstraints = false
-        view.insertSubview(itemListVC.view, belowSubview: floatingActionButton)
+        view.addSubview(itemListVC.view)
         itemListVC.didMove(toParent: self)
 
         NSLayoutConstraint.activate([
@@ -179,16 +158,12 @@ class DetailViewController: UIViewController {
         if isEditingMode {
             navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "checkmark"), style: .plain, target: self, action: #selector(toggleEditMode))
             navigationItem.rightBarButtonItem?.tintColor = .systemBlue
-            floatingActionButton.isHidden = false
             itemListVC.isEditingMode = true
-            itemListVC.tableView.dragInteractionEnabled = true
         } else {
             let editButton = UIBarButtonItem(image: UIImage(systemName: "square.and.pencil"), style: .plain, target: self, action: #selector(toggleEditMode))
             editButton.tintColor = .systemBlue
             navigationItem.rightBarButtonItem = editButton
-            floatingActionButton.isHidden = true
             itemListVC.isEditingMode = false
-            itemListVC.tableView.dragInteractionEnabled = false
             for cell in itemListVC.tableView.visibleCells {
                 if let itemCell = cell as? ItemCell {
                     itemCell.endEditingName()
@@ -245,6 +220,10 @@ extension DetailViewController: ItemListViewControllerDelegate {
 
     func itemListViewController(_ controller: ItemListViewController, didRequestNewCategoryForItem item: TripItem) {
         presentCategoryPicker(for: item)
+    }
+    
+    func itemListViewControllerDidRequestAddItem(_ controller: ItemListViewController) {
+        addNewItem()
     }
 }
 

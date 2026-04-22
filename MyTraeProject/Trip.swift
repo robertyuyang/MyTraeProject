@@ -82,16 +82,14 @@ struct TripTemplate: Codable, Equatable {
     var name: String
     var description: String?
     var items: [TripItem]
-    var imageUrl: String?
     let isBuiltIn: Bool
     var createdAt: Date
     
-    init(name: String, description: String? = nil, items: [TripItem] = [], imageUrl: String? = nil, isBuiltIn: Bool = false) {
+    init(name: String, description: String? = nil, items: [TripItem] = [], isBuiltIn: Bool = false) {
         self.id = UUID()
         self.name = name
         self.description = description
         self.items = items
-        self.imageUrl = imageUrl
         self.isBuiltIn = isBuiltIn
         self.createdAt = Date()
     }
@@ -101,7 +99,6 @@ struct TripTemplate: Codable, Equatable {
         trip.items = items.map { item in
             TripItem(name: item.name, defaultPriority: item.defaultPriority, category: item.category)
         }
-        trip.imageUrl = imageUrl
         return trip
     }
 }
@@ -123,6 +120,15 @@ struct Trip: Codable, Equatable {
         self.priorityOverrides = [:]
         self.imageUrl = nil
         self.createdAt = Date()
+    }
+    
+    func toTemplate(name: String? = nil) -> TripTemplate {
+        TripTemplate(
+            name: name ?? self.name,
+            description: nil,
+            items: self.items,
+            isBuiltIn: false
+        )
     }
     
     func isItemChecked(_ item: TripItem) -> Bool {
@@ -210,7 +216,6 @@ class DataManager {
                     TripItem(name: "充电头 手机充电线 手表充电线", defaultPriority: .p0, category: BuiltInCategory.electronics),
                     TripItem(name: "充电宝", defaultPriority: .p0, category: BuiltInCategory.electronics)
                 ],
-                imageUrl: "https://images.unsplash.com/photo-1501785888041-af3ef281b399?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
                 isBuiltIn: true
             ),
             TripTemplate(
@@ -226,7 +231,6 @@ class DataManager {
                     TripItem(name: "雨伞/雨衣", defaultPriority: .p2, category: BuiltInCategory.other),
                     TripItem(name: "墨镜", defaultPriority: .p2, category: BuiltInCategory.accessories)
                 ],
-                imageUrl: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
                 isBuiltIn: true
             ),
             TripTemplate(
@@ -242,7 +246,6 @@ class DataManager {
                     TripItem(name: "便携U盘/移动硬盘", defaultPriority: .p1, category: BuiltInCategory.electronics),
                     TripItem(name: "商务皮鞋", defaultPriority: .p2, category: BuiltInCategory.footwear)
                 ],
-                imageUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
                 isBuiltIn: true
             ),
             TripTemplate(
@@ -259,7 +262,6 @@ class DataManager {
                     TripItem(name: "相机/运动相机", defaultPriority: .p2, category: BuiltInCategory.photography),
                     TripItem(name: "沙滩玩具", defaultPriority: .p2, category: BuiltInCategory.other)
                 ],
-                imageUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
                 isBuiltIn: true
             ),
             TripTemplate(
@@ -278,7 +280,6 @@ class DataManager {
                     TripItem(name: "指南针/地图", defaultPriority: .p2, category: BuiltInCategory.accessories),
                     TripItem(name: "手套", defaultPriority: .p2, category: BuiltInCategory.accessories)
                 ],
-                imageUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
                 isBuiltIn: true
             ),
             TripTemplate(
@@ -297,7 +298,6 @@ class DataManager {
                     TripItem(name: "颈枕/眼罩", defaultPriority: .p2, category: BuiltInCategory.accessories),
                     TripItem(name: "行李牌", defaultPriority: .p2, category: BuiltInCategory.accessories)
                 ],
-                imageUrl: "https://images.unsplash.com/photo-1488085061387-422e29b40080?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80",
                 isBuiltIn: true
             )
         ]

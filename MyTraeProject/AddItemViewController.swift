@@ -40,6 +40,7 @@ class AddItemViewController: UIViewController {
     private let aiDescriptionLabel = UILabel()
     private let aiTextView = UITextView()
     private let aiProcessingLabel = UILabel()
+    private let pasteButton = UIButton(type: .system)
 
 
     private let bottomBar = UIView()
@@ -293,6 +294,18 @@ class AddItemViewController: UIViewController {
         aiDescriptionLabel.translatesAutoresizingMaskIntoConstraints = false
         aiBulkAddView.addSubview(aiDescriptionLabel)
 
+        pasteButton.setTitle("粘贴并 AI 识别", for: .normal)
+        pasteButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .bold)
+        pasteButton.backgroundColor = themeBlue.withAlphaComponent(0.1)
+        pasteButton.setTitleColor(themeBlue, for: .normal)
+        pasteButton.layer.cornerRadius = 12
+        pasteButton.translatesAutoresizingMaskIntoConstraints = false
+        pasteButton.addTarget(self, action: #selector(pasteButtonTapped), for: .touchUpInside)
+        let pasteIcon = UIImage(systemName: "doc.on.clipboard", withConfiguration: UIImage.SymbolConfiguration(pointSize: 14, weight: .bold))
+        pasteButton.setImage(pasteIcon, for: .normal)
+        pasteButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 8)
+        aiBulkAddView.addSubview(pasteButton)
+
         let textViewContainer = UIView()
         textViewContainer.backgroundColor = .white
         textViewContainer.layer.cornerRadius = 12
@@ -345,7 +358,12 @@ class AddItemViewController: UIViewController {
             aiDescriptionLabel.leadingAnchor.constraint(equalTo: aiBulkAddView.leadingAnchor),
             aiDescriptionLabel.trailingAnchor.constraint(equalTo: aiBulkAddView.trailingAnchor),
 
-            textViewContainer.topAnchor.constraint(equalTo: aiDescriptionLabel.bottomAnchor, constant: 32),
+            pasteButton.topAnchor.constraint(equalTo: aiDescriptionLabel.bottomAnchor, constant: 20),
+            pasteButton.leadingAnchor.constraint(equalTo: aiBulkAddView.leadingAnchor),
+            pasteButton.trailingAnchor.constraint(equalTo: aiBulkAddView.trailingAnchor),
+            pasteButton.heightAnchor.constraint(equalToConstant: 48),
+
+            textViewContainer.topAnchor.constraint(equalTo: pasteButton.bottomAnchor, constant: 20),
             textViewContainer.leadingAnchor.constraint(equalTo: aiBulkAddView.leadingAnchor),
             textViewContainer.trailingAnchor.constraint(equalTo: aiBulkAddView.trailingAnchor),
             textViewContainer.heightAnchor.constraint(equalToConstant: 200),
@@ -717,6 +735,20 @@ class AddItemViewController: UIViewController {
         guard let category = sender.accessibilityIdentifier else { return }
         selectedCategory = category
         updateCategorySelection()
+    }
+
+    @objc private func pasteButtonTapped() {
+        guard UIPasteboard.general.hasStrings, let pasteText = UIPasteboard.general.string, !pasteText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            showError("剪贴板中没有可用的文本")
+            return
+        }
+        
+        aiTextView.text = pasteText
+        if let placeholder = aiTextView.superview?.viewWithTag(100) {
+            placeholder.isHidden = true
+        }
+        
+        analyzeAndAddItems()
     }
 
     @objc private func actionButtonTapped() {

@@ -21,8 +21,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let window = UIWindow(windowScene: windowScene)
         self.window = window
         
-        let listVC = TripsViewController2()
-        let navigationController = UINavigationController(rootViewController: listVC)
+        let mainTabBarVC = MainTabBarController()
+        let navigationController = UINavigationController(rootViewController: mainTabBarVC)
+        navigationController.setNavigationBarHidden(true, animated: false)
         
         window.rootViewController = navigationController
         window.makeKeyAndVisible()
