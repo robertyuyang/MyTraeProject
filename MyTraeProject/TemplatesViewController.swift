@@ -426,11 +426,10 @@ class TemplateCollectionViewCell: UICollectionViewCell {
     }
 }
 
-class TemplateEditViewController: UIViewController, ItemListViewControllerDelegate, CategoryPickerViewControllerDelegate, AddItemViewControllerDelegate {
+class TemplateEditViewController: UIViewController {
     
     private var template: TripTemplate
     private let itemListVC = ItemListViewController()
-    private var pendingCategoryItem: TripItem?
     
     var onSave: ((TripTemplate) -> Void)?
     
@@ -461,10 +460,19 @@ class TemplateEditViewController: UIViewController, ItemListViewControllerDelega
     }
     
     private func setupItemList() {
-        itemListVC.mode = .confirmation
         itemListVC.items = template.items
         itemListVC.isEditingMode = true
-        itemListVC.delegate = self
+        itemListVC.showsAddButton = true
+        
+        // 设置闭包
+        itemListVC.configureAddItemVC = { [weak self] addVC in
+            guard let self = self else { return }
+            addVC.tripName = self.template.name
+        }
+        itemListVC.onDataChange = { [weak self] in
+            guard let self = self else { return }
+            self.template.items = self.itemListVC.items
+        }
         
         addChild(itemListVC)
         itemListVC.view.translatesAutoresizingMaskIntoConstraints = false
@@ -489,61 +497,91 @@ class TemplateEditViewController: UIViewController, ItemListViewControllerDelega
     @objc private func cancelTapped() {
         dismiss(animated: true)
     }
+}
+
+// MARK: - ItemListConfirmViewController
+
+class ItemListConfirmViewController: UIViewController {
     
-    @objc private func addNewItem() {
-        let addVC = AddItemViewController()
-        addVC.delegate = self
-        addVC.tripName = template.name
-        navigationController?.pushViewController(addVC, animated: true)
+    var items: [TripItem] = []
+    var onConfirm: (([TripItem]) -> Void)?
+    
+    private let itemListVC = ItemListViewController()
+    private let confirmButton = UIButton(type: .system)
+    private let bottomBar = UIView()
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupUI()
+        setupItemListVC()
     }
     
-    private func presentCategoryPicker(for item: TripItem) {
-        pendingCategoryItem = item
-        let picker = CategoryPickerViewController()
-        picker.delegate = self
-        picker.selectedCategory = item.category
-        present(picker, animated: true)
+    private func setupUI() {
+        view.backgroundColor = .white
+        title = "确认添加"
     }
     
-    func itemListViewController(_ controller: ItemListViewController, didConfirmItems items: [TripItem]) {
-        var updatedTemplate = template
-        updatedTemplate.items = items
-        onSave?(updatedTemplate)
+    private func setupItemListVC() {
+        itemListVC.items = items
+        itemListVC.isEditingMode = true
+        itemListVC.showsAddButton = false
+        
+        addChild(itemListVC)
+        itemListVC.view.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(itemListVC.view)
+        itemListVC.didMove(toParent: self)
+        
+        bottomBar.backgroundColor = UIColor(red: 250/255, green: 249/255, blue: 254/255, alpha: 0.9)
+        bottomBar.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(bottomBar)
+        
+        let blurEffect = UIBlurEffect(style: .light)
+        let blurView = UIVisualEffectView(effect: blurEffect)
+        blurView.translatesAutoresizingMaskIntoConstraints = false
+        bottomBar.insertSubview(blurView, at: 0)
+        
+        confirmButton.backgroundColor = UIColor(red: 0/255, green: 88/255, blue: 188/255, alpha: 1.0)
+        confirmButton.layer.cornerRadius = 9999
+        confirmButton.clipsToBounds = false
+        confirmButton.translatesAutoresizingMaskIntoConstraints = false
+        confirmButton.addTarget(self, action: #selector(confirmButtonTapped), for: .touchUpInside)
+        bottomBar.addSubview(confirmButton)
+        
+        var config = UIButton.Configuration.plain()
+        config.baseForegroundColor = .white
+        let titleAttr = AttributedString("确认添加", attributes: AttributeContainer([
+            .font: UIFont.systemFont(ofSize: 15, weight: .bold)
+        ]))
+        config.attributedTitle = titleAttr
+        config.image = UIImage(systemName: "checkmark", withConfiguration: UIImage.SymbolConfiguration(pointSize: 14, weight: .bold))
+        config.imagePadding = 12
+        config.imagePlacement = .leading
+        confirmButton.configuration = config
+        
+        NSLayoutConstraint.activate([
+            itemListVC.view.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            itemListVC.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            itemListVC.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            itemListVC.view.bottomAnchor.constraint(equalTo: bottomBar.topAnchor),
+            
+            bottomBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            bottomBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            bottomBar.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            bottomBar.heightAnchor.constraint(equalToConstant: 100),
+            
+            blurView.topAnchor.constraint(equalTo: bottomBar.topAnchor),
+            blurView.leadingAnchor.constraint(equalTo: bottomBar.leadingAnchor),
+            blurView.trailingAnchor.constraint(equalTo: bottomBar.trailingAnchor),
+            blurView.bottomAnchor.constraint(equalTo: bottomBar.bottomAnchor),
+            
+            confirmButton.topAnchor.constraint(equalTo: bottomBar.topAnchor, constant: 16),
+            confirmButton.leadingAnchor.constraint(equalTo: bottomBar.leadingAnchor, constant: 24),
+            confirmButton.trailingAnchor.constraint(equalTo: bottomBar.trailingAnchor, constant: -24),
+            confirmButton.heightAnchor.constraint(equalToConstant: 60),
+        ])
     }
     
-    func itemListViewController(_ controller: ItemListViewController, didUpdateItem item: TripItem) {
-        if let index = template.items.firstIndex(where: { $0.id == item.id }) {
-            template.items[index] = item
-        }
-    }
-    
-    func itemListViewController(_ controller: ItemListViewController, didReorderItems items: [TripItem]) {
-        template.items = items
-    }
-    
-    func itemListViewController(_ controller: ItemListViewController, didRequestNewCategoryForItem item: TripItem) {
-        presentCategoryPicker(for: item)
-    }
-    
-    func itemListViewControllerDidRequestAddItem(_ controller: ItemListViewController) {
-        addNewItem()
-    }
-    
-    func addItemViewController(_ controller: AddItemViewController, didAddItems items: [TripItem]) {
-        for item in items {
-            template.items.append(item)
-        }
-        itemListVC.items = template.items
-    }
-    
-    func categoryPickerViewController(_ controller: CategoryPickerViewController, didSelectCategory category: Category) {
-        controller.dismiss(animated: true)
-        itemListVC.moveItemToCategory(pendingCategoryItem!, category: category)
-        pendingCategoryItem = nil
-    }
-    
-    func categoryPickerViewControllerDidCancel(_ controller: CategoryPickerViewController) {
-        controller.dismiss(animated: true)
-        pendingCategoryItem = nil
+    @objc private func confirmButtonTapped() {
+        onConfirm?(itemListVC.items)
     }
 }

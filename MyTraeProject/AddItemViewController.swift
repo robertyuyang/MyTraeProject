@@ -8,6 +8,9 @@ class AddItemViewController: UIViewController {
 
     weak var delegate: AddItemViewControllerDelegate?
     var tripName: String = ""
+    
+    // MARK: - Closures
+    var onAddItems: (([TripItem]) -> Void)?
 
     private enum Tab: Int {
         case singleEntry = 0
@@ -765,8 +768,9 @@ class AddItemViewController: UIViewController {
             return
         }
 
-        let item = TripItem(name: name.trimmingCharacters(in: .whitespacesAndNewlines), defaultPriority: selectedPriority, category: selectedCategory)
-        delegate?.addItemViewController(self, didAddItems: [item])
+        let items = [TripItem(name: name.trimmingCharacters(in: .whitespacesAndNewlines), defaultPriority: selectedPriority, category: selectedCategory)]
+        onAddItems?(items)
+        delegate?.addItemViewController(self, didAddItems: items)
         navigationController?.popViewController(animated: true)
     }
 
@@ -785,11 +789,21 @@ class AddItemViewController: UIViewController {
                 if items.isEmpty {
                     self.showError("未能识别出任何物品，请重试。")
                 } else {
-                    let listVC = ItemListViewController()
-                    listVC.mode = .confirmation
-                    listVC.items = items
-                    listVC.delegate = self
-                    self.navigationController?.pushViewController(listVC, animated: true)
+                    // 跳转到确认页面
+                    let confirmVC = ItemListConfirmViewController()
+                    confirmVC.items = items
+                    confirmVC.onConfirm = { [weak self] confirmedItems in
+                        guard let self = self else { return }
+                        self.onAddItems?(confirmedItems)
+                        self.delegate?.addItemViewController(self, didAddItems: confirmedItems)
+                        // 从导航栈中移除确认页面和添加页面
+                        if let nav = self.navigationController {
+                            var vcs = nav.viewControllers
+                            vcs.removeAll { $0 === confirmVC || $0 === self }
+                            nav.setViewControllers(vcs, animated: true)
+                        }
+                    }
+                    self.navigationController?.pushViewController(confirmVC, animated: true)
                 }
             case .failure(let error):
                 self.showError("分析失败：\(error.localizedDescription)")
@@ -855,12 +869,4 @@ extension AddItemViewController: UITextViewDelegate {
     }
 }
 
-// MARK: - ItemListViewControllerDelegate
 
-extension AddItemViewController: ItemListViewControllerDelegate {
-    func itemListViewController(_ controller: ItemListViewController, didConfirmItems items: [TripItem]) {
-        delegate?.addItemViewController(self, didAddItems: items)
-        navigationController?.popToViewController(self, animated: false)
-        navigationController?.popViewController(animated: true)
-    }
-}

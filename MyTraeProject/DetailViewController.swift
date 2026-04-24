@@ -17,7 +17,6 @@ class DetailViewController: UIViewController {
     var index: Int!
     
     private var isEditingMode = false
-    private var pendingCategoryItem: TripItem?
     
     private let stackView = UIStackView()
     private let p0ProgressView = ProgressView()
@@ -91,11 +90,19 @@ class DetailViewController: UIViewController {
     
     private func setupItemListVC() {
         itemListVC = ItemListViewController()
-        itemListVC.mode = .embedded
-        itemListVC.delegate = self
         itemListVC.items = trip.items
         itemListVC.checkedItemIDs = trip.checkedItemIDs
         itemListVC.priorityOverrides = trip.priorityOverrides
+        
+        // 设置闭包
+        itemListVC.configureAddItemVC = { [weak self] addVC in
+            guard let self = self else { return }
+            addVC.tripName = self.trip.name
+        }
+        itemListVC.onDataChange = { [weak self] in
+            guard let self = self else { return }
+            self.saveAndUpdate()
+        }
 
         addChild(itemListVC)
         itemListVC.view.translatesAutoresizingMaskIntoConstraints = false
@@ -145,13 +152,6 @@ class DetailViewController: UIViewController {
         delegate?.detailViewController(self, didUpdateTrip: trip, at: index)
     }
     
-    @objc private func addNewItem() {
-        let addVC = AddItemViewController()
-        addVC.delegate = self
-        addVC.tripName = trip.name
-        navigationController?.pushViewController(addVC, animated: true)
-    }
-    
     @objc private func toggleEditMode() {
         isEditingMode.toggle()
         
@@ -189,63 +189,6 @@ extension DetailViewController: AddItemViewControllerDelegate {
         }
         itemListVC.items = trip.items
         saveAndUpdate()
-    }
-}
-
-extension DetailViewController: ItemListViewControllerDelegate {
-    func itemListViewController(_ controller: ItemListViewController, didToggleCheckForItem item: TripItem) {
-        syncFromItemListVC()
-        updateProgress()
-        delegate?.detailViewController(self, didUpdateTrip: trip, at: index)
-    }
-
-    func itemListViewController(_ controller: ItemListViewController, didDeleteItem item: TripItem) {
-        saveAndUpdate()
-    }
-
-    func itemListViewController(_ controller: ItemListViewController, didUpdateItem item: TripItem) {
-        syncFromItemListVC()
-    }
-
-    func itemListViewController(_ controller: ItemListViewController, didReorderItems items: [TripItem]) {
-        syncFromItemListVC()
-        delegate?.detailViewController(self, didUpdateTrip: trip, at: index)
-    }
-
-    func itemListViewController(_ controller: ItemListViewController, didChangePriorityForItem item: TripItem, to priority: Priority) {
-        syncFromItemListVC()
-        updateProgress()
-        delegate?.detailViewController(self, didUpdateTrip: trip, at: index)
-    }
-
-    func itemListViewController(_ controller: ItemListViewController, didRequestNewCategoryForItem item: TripItem) {
-        presentCategoryPicker(for: item)
-    }
-    
-    func itemListViewControllerDidRequestAddItem(_ controller: ItemListViewController) {
-        addNewItem()
-    }
-}
-
-extension DetailViewController: CategoryPickerViewControllerDelegate {
-    func categoryPickerViewController(_ controller: CategoryPickerViewController, didSelectCategory category: Category) {
-        controller.dismiss(animated: true)
-        itemListVC.moveItemToCategory(pendingCategoryItem!, category: category)
-        saveAndUpdate()
-        pendingCategoryItem = nil
-    }
-
-    func categoryPickerViewControllerDidCancel(_ controller: CategoryPickerViewController) {
-        controller.dismiss(animated: true)
-        pendingCategoryItem = nil
-    }
-
-    private func presentCategoryPicker(for item: TripItem) {
-        pendingCategoryItem = item
-        let picker = CategoryPickerViewController()
-        picker.delegate = self
-        picker.selectedCategory = item.category
-        present(picker, animated: true)
     }
 }
 

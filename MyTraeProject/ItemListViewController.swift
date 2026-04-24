@@ -1,60 +1,43 @@
 import UIKit
 
-protocol ItemListViewControllerDelegate: AnyObject {
-    func itemListViewController(_ controller: ItemListViewController, didConfirmItems items: [TripItem])
-    func itemListViewController(_ controller: ItemListViewController, didToggleCheckForItem item: TripItem)
-    func itemListViewController(_ controller: ItemListViewController, didDeleteItem item: TripItem)
-    func itemListViewController(_ controller: ItemListViewController, didUpdateItem item: TripItem)
-    func itemListViewController(_ controller: ItemListViewController, didReorderItems items: [TripItem])
-    func itemListViewController(_ controller: ItemListViewController, didChangePriorityForItem item: TripItem, to priority: Priority)
-    func itemListViewController(_ controller: ItemListViewController, didRequestNewCategoryForItem item: TripItem)
-    func itemListViewControllerDidRequestAddItem(_ controller: ItemListViewController)
-}
-
-extension ItemListViewControllerDelegate {
-    func itemListViewController(_ controller: ItemListViewController, didConfirmItems items: [TripItem]) {}
-    func itemListViewController(_ controller: ItemListViewController, didToggleCheckForItem item: TripItem) {}
-    func itemListViewController(_ controller: ItemListViewController, didDeleteItem item: TripItem) {}
-    func itemListViewController(_ controller: ItemListViewController, didUpdateItem item: TripItem) {}
-    func itemListViewController(_ controller: ItemListViewController, didReorderItems items: [TripItem]) {}
-    func itemListViewController(_ controller: ItemListViewController, didChangePriorityForItem item: TripItem, to priority: Priority) {}
-    func itemListViewController(_ controller: ItemListViewController, didRequestNewCategoryForItem item: TripItem) {}
-    func itemListViewControllerDidRequestAddItem(_ controller: ItemListViewController) {}
-}
-
-enum ItemListMode {
-    case embedded
-    case confirmation
-}
-
 class ItemListViewController: UIViewController {
 
-    weak var delegate: ItemListViewControllerDelegate?
-
-    var mode: ItemListMode = .embedded
+    // MARK: - Public Properties
     var items: [TripItem] = [] {
-        didSet { tableView.reloadData() }
+        didSet {
+            if isViewLoaded {
+                tableView.reloadData()
+            }
+        }
     }
     var isEditingMode: Bool = false {
         didSet {
-            tableView.reloadData()
-            updateFloatingActionButtonVisibility()
-            tableView.dragInteractionEnabled = isEditingMode
+            if isViewLoaded {
+                tableView.reloadData()
+                updateFloatingActionButtonVisibility()
+                tableView.dragInteractionEnabled = isEditingMode
+            }
         }
     }
     var showsAddButton: Bool = true {
         didSet {
-            updateFloatingActionButtonVisibility()
+            if isViewLoaded {
+                updateFloatingActionButtonVisibility()
+            }
         }
     }
 
     var checkedItemIDs: Set<UUID> = []
     var priorityOverrides: [UUID: Priority] = [:]
 
+    // MARK: - Closures
+    var onDataChange: (() -> Void)?
+    var configureAddItemVC: ((AddItemViewController) -> Void)?
+
+    // MARK: - Private Properties
     let tableView = UITableView()
     private var dropdownOverlay: UIView?
     private var tableViewBottomConstraint: NSLayoutConstraint?
-    private var isConfirmationMode = false
 
     private let newCategoryDropZone = UIView()
     private let dropZoneLabel = UILabel()
@@ -62,12 +45,14 @@ class ItemListViewController: UIViewController {
     private var dropZoneHeightConstraint: NSLayoutConstraint?
     private var dropZoneBottomConstraint: NSLayoutConstraint?
     private var pendingDropItem: TripItem?
-    private var bottomBar: UIView?
+    private var pendingCategoryItem: TripItem?
     
     private let floatingActionButton = UIButton(type: .system)
 
-    private let confirmButton = UIButton(type: .system)
-    private let themeBlue = UIColor(red: 0/255, green: 88/255, blue: 188/255, alpha: 1.0)
+    // MARK: - Setup
+    private func notifyDataUpdated() {
+        onDataChange?()
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -75,9 +60,11 @@ class ItemListViewController: UIViewController {
         setupDropZone()
         setupTableView()
         setupFloatingActionButton()
-        if mode == .confirmation {
-            setupConfirmationUI()
-        }
+        
+        // 应用已经设置的属性值
+        tableView.reloadData()
+        updateFloatingActionButtonVisibility()
+        tableView.dragInteractionEnabled = isEditingMode
     }
 
     private func setupDropZone() {
@@ -170,7 +157,15 @@ class ItemListViewController: UIViewController {
     }
     
     @objc private func addButtonTapped() {
-        delegate?.itemListViewControllerDidRequestAddItem(self)
+        let addVC = AddItemViewController()
+        configureAddItemVC?(addVC)
+        addVC.onAddItems = { [weak self] newItems in
+            guard let self = self else { return }
+            self.items.append(contentsOf: newItems)
+            self.tableView.reloadData()
+            self.notifyDataUpdated()
+        }
+        navigationController?.pushViewController(addVC, animated: true)
     }
 
     func showDropZone() {
@@ -180,9 +175,7 @@ class ItemListViewController: UIViewController {
             self.view.bringSubviewToFront(self.newCategoryDropZone)
             self.newCategoryDropZone.isHidden = false
             self.floatingActionButton.isHidden = true
-            if !self.isConfirmationMode {
-                self.tableViewBottomConstraint?.constant = -88
-            }
+            self.tableViewBottomConstraint?.constant = -88
             UIView.animate(withDuration: 0.3, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0.5) {
                 self.newCategoryDropZone.alpha = 1
                 self.view.layoutIfNeeded()
@@ -193,9 +186,7 @@ class ItemListViewController: UIViewController {
     func hideDropZone() {
         UIView.animate(withDuration: 0.25, animations: {
             self.newCategoryDropZone.alpha = 0
-            if !self.isConfirmationMode {
-                self.tableViewBottomConstraint?.constant = 0
-            }
+            self.tableViewBottomConstraint?.constant = 0
             self.view.layoutIfNeeded()
         }) { _ in
             self.newCategoryDropZone.isHidden = true
@@ -227,100 +218,14 @@ class ItemListViewController: UIViewController {
     func moveItemToCategory(_ item: TripItem, category: Category) {
         guard let idx = items.firstIndex(where: { $0.id == item.id }) else { return }
         
-        let oldCategory = items[idx].category
-        let oldGroupedItems = groupedItems
-        let oldSortedCategories = sortedCategories
-        
         items[idx].category = category
-        
-        if mode == .embedded {
-            delegate?.itemListViewController(self, didReorderItems: items)
-        }
         
         // 直接 reloadData 避免 performBatchUpdates 的 section 数量不一致问题
         UIView.performWithoutAnimation {
             tableView.reloadData()
         }
-    }
-
-    private func setupConfirmationUI() {
-        isConfirmationMode = true
-        title = "确认物品清单"
-        navigationController?.setNavigationBarHidden(false, animated: false)
-        view.backgroundColor = UIColor(red: 250/255, green: 249/255, blue: 254/255, alpha: 1.0)
-        tableView.backgroundColor = UIColor(red: 250/255, green: 249/255, blue: 254/255, alpha: 1.0)
-
-        let backButton = UIButton(type: .system)
-        backButton.setImage(UIImage(systemName: "arrow.left", withConfiguration: UIImage.SymbolConfiguration(pointSize: 16, weight: .medium)), for: .normal)
-        backButton.tintColor = .black
-        backButton.addTarget(self, action: #selector(dismissSelf), for: .touchUpInside)
-        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: backButton)
-
-        bottomBar = UIView()
-        bottomBar!.backgroundColor = UIColor(red: 250/255, green: 249/255, blue: 254/255, alpha: 0.8)
-        bottomBar!.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(bottomBar!)
-
-        let blurEffect = UIBlurEffect(style: .light)
-        let blurView = UIVisualEffectView(effect: blurEffect)
-        blurView.translatesAutoresizingMaskIntoConstraints = false
-        bottomBar!.insertSubview(blurView, at: 0)
-
-        confirmButton.backgroundColor = themeBlue
-        confirmButton.layer.cornerRadius = 9999
-        confirmButton.clipsToBounds = false
-        confirmButton.translatesAutoresizingMaskIntoConstraints = false
-        confirmButton.addTarget(self, action: #selector(confirmTapped), for: .touchUpInside)
-        bottomBar!.addSubview(confirmButton)
-
-        var config = UIButton.Configuration.plain()
-        config.baseForegroundColor = .white
-        let titleAttr = AttributedString("确认添加", attributes: AttributeContainer([
-            .font: UIFont.systemFont(ofSize: 15, weight: .bold)
-        ]))
-        config.attributedTitle = titleAttr
-        config.image = UIImage(systemName: "checkmark", withConfiguration: UIImage.SymbolConfiguration(pointSize: 14, weight: .bold))
-        config.imagePadding = 12
-        config.imagePlacement = .leading
-        confirmButton.configuration = config
-
-        let shadowLayer = CALayer()
-        shadowLayer.shadowColor = themeBlue.withAlphaComponent(0.2).cgColor
-        shadowLayer.shadowOffset = CGSize(width: 0, height: 10)
-        shadowLayer.shadowOpacity = 1
-        shadowLayer.shadowRadius = 15
-        confirmButton.layer.insertSublayer(shadowLayer, at: 0)
-
-        tableViewBottomConstraint?.isActive = false
-        tableViewBottomConstraint = tableView.bottomAnchor.constraint(equalTo: bottomBar!.topAnchor)
-        tableViewBottomConstraint?.isActive = true
-
-        dropZoneBottomConstraint?.isActive = false
-        dropZoneBottomConstraint = newCategoryDropZone.bottomAnchor.constraint(equalTo: bottomBar!.topAnchor, constant: -8)
-        dropZoneBottomConstraint?.isActive = true
-
-        view.bringSubviewToFront(newCategoryDropZone)
-
-        NSLayoutConstraint.activate([
-            bottomBar!.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            bottomBar!.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            bottomBar!.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            bottomBar!.heightAnchor.constraint(equalToConstant: 100),
-
-            blurView.topAnchor.constraint(equalTo: bottomBar!.topAnchor),
-            blurView.leadingAnchor.constraint(equalTo: bottomBar!.leadingAnchor),
-            blurView.trailingAnchor.constraint(equalTo: bottomBar!.trailingAnchor),
-            blurView.bottomAnchor.constraint(equalTo: bottomBar!.bottomAnchor),
-
-            confirmButton.topAnchor.constraint(equalTo: bottomBar!.topAnchor, constant: 16),
-            confirmButton.leadingAnchor.constraint(equalTo: bottomBar!.leadingAnchor, constant: 24),
-            confirmButton.trailingAnchor.constraint(equalTo: bottomBar!.trailingAnchor, constant: -24),
-            confirmButton.heightAnchor.constraint(equalToConstant: 60),
-        ])
-
-        isEditingMode = true
-        showsAddButton = false
-        tableView.dragInteractionEnabled = true
+        
+        notifyDataUpdated()
     }
 
     func priority(for item: TripItem) -> Priority {
@@ -329,14 +234,6 @@ class ItemListViewController: UIViewController {
 
     func isItemChecked(_ item: TripItem) -> Bool {
         return checkedItemIDs.contains(item.id)
-    }
-
-    @objc private func dismissSelf() {
-        navigationController?.popViewController(animated: true)
-    }
-
-    @objc private func confirmTapped() {
-        delegate?.itemListViewController(self, didConfirmItems: items)
     }
 
     private func dismissDropdown() {
@@ -411,10 +308,8 @@ class ItemListViewController: UIViewController {
                 guard let self = self else { return }
                 self.dismissDropdown()
                 self.priorityOverrides[item.id] = p
-                if self.mode == .embedded {
-                    self.delegate?.itemListViewController(self, didChangePriorityForItem: item, to: p)
-                }
                 self.tableView.reloadData()
+                self.notifyDataUpdated()
             }, for: .touchUpInside)
 
             let heightConstraint = btn.heightAnchor.constraint(equalToConstant: itemHeight - 2)
@@ -461,9 +356,7 @@ extension ItemListViewController: UITableViewDataSource, UITableViewDelegate {
 
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let headerView = UIView()
-        headerView.backgroundColor = mode == .confirmation
-            ? UIColor(red: 250/255, green: 249/255, blue: 254/255, alpha: 1.0)
-            : .white
+        headerView.backgroundColor = .white
 
         let category = sortedCategories[section]
         
@@ -519,9 +412,7 @@ extension ItemListViewController: UITableViewDataSource, UITableViewDelegate {
             guard let self = self else { return }
             if let idx = self.items.firstIndex(where: { $0.id == item.id }) {
                 self.items[idx].name = newName
-                if self.mode == .embedded {
-                    self.delegate?.itemListViewController(self, didUpdateItem: self.items[idx])
-                }
+                self.notifyDataUpdated()
             }
         }
         cell.onPriorityTapped = { [weak self] in
@@ -542,8 +433,8 @@ extension ItemListViewController: UITableViewDataSource, UITableViewDelegate {
         } else {
             checkedItemIDs.insert(item.id)
         }
-        delegate?.itemListViewController(self, didToggleCheckForItem: item)
         tableView.reloadData()
+        notifyDataUpdated()
     }
 
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
@@ -553,11 +444,9 @@ extension ItemListViewController: UITableViewDataSource, UITableViewDelegate {
             let itemsInCategory = self.groupedItems[category]!
             let item = itemsInCategory[indexPath.row]
             if let index = self.items.firstIndex(where: { $0.id == item.id }) {
-                let removed = self.items.remove(at: index)
-                if self.mode == .embedded {
-                    self.delegate?.itemListViewController(self, didDeleteItem: removed)
-                }
+                self.items.remove(at: index)
                 self.tableView.reloadData()
+                self.notifyDataUpdated()
             }
             completion(true)
         }
@@ -604,9 +493,7 @@ extension ItemListViewController: UITableViewDataSource, UITableViewDelegate {
             }
         }
 
-        if mode == .embedded {
-            delegate?.itemListViewController(self, didReorderItems: items)
-        }
+        notifyDataUpdated()
     }
 }
 
@@ -679,9 +566,7 @@ extension ItemListViewController: UITableViewDragDelegate, UITableViewDropDelega
         }
 
         tableView.reloadData()
-        if mode == .embedded {
-            delegate?.itemListViewController(self, didReorderItems: items)
-        }
+        notifyDataUpdated()
     }
 }
 
@@ -706,11 +591,36 @@ extension ItemListViewController: UIDropInteractionDelegate {
         guard let dragItem = session.items.first,
               let item = dragItem.localObject as? TripItem else { return }
         pendingDropItem = item
-        delegate?.itemListViewController(self, didRequestNewCategoryForItem: item)
+        presentCategoryPicker(for: item)
+    }
+    
+    private func presentCategoryPicker(for item: TripItem) {
+        pendingCategoryItem = item
+        let picker = CategoryPickerViewController()
+        picker.delegate = self
+        picker.selectedCategory = item.category
+        present(picker, animated: true)
     }
 
     func dropInteraction(_ interaction: UIDropInteraction, sessionDidEnd session: UIDropSession) {
         resetDropZoneAppearance()
+    }
+}
+
+// MARK: - CategoryPickerViewControllerDelegate
+
+extension ItemListViewController: CategoryPickerViewControllerDelegate {
+    func categoryPickerViewController(_ controller: CategoryPickerViewController, didSelectCategory category: Category) {
+        controller.dismiss(animated: true)
+        if let item = pendingCategoryItem {
+            moveItemToCategory(item, category: category)
+            pendingCategoryItem = nil
+        }
+    }
+
+    func categoryPickerViewControllerDidCancel(_ controller: CategoryPickerViewController) {
+        controller.dismiss(animated: true)
+        pendingCategoryItem = nil
     }
 }
 
