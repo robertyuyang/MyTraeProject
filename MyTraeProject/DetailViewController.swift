@@ -92,7 +92,6 @@ class DetailViewController: UIViewController {
         itemListVC = ItemListViewController()
         itemListVC.items = trip.items
         itemListVC.checkedItemIDs = trip.checkedItemIDs
-        itemListVC.priorityOverrides = trip.priorityOverrides
         
         // 设置闭包
         itemListVC.configureAddItemVC = { [weak self] addVC in
@@ -120,14 +119,13 @@ class DetailViewController: UIViewController {
     private func syncFromItemListVC() {
         trip.items = itemListVC.items
         trip.checkedItemIDs = itemListVC.checkedItemIDs
-        trip.priorityOverrides = itemListVC.priorityOverrides
     }
     
     private func updateProgress() {
         let items = trip.items
         
         for priority in Priority.allCases {
-            let priorityItems = items.filter { trip.priority(for: $0) == priority }
+            let priorityItems = items.filter { $0.priority == priority }
             let checkedCount = priorityItems.filter { trip.isItemChecked($0) }.count
             let totalCount = priorityItems.count
             let percentage = totalCount > 0 ? Double(checkedCount) / Double(totalCount) : 0

@@ -121,7 +121,7 @@ class LLMCategorizingService: TextCategorizingService {
             let category = dict["category"] as? String ?? BuiltInCategory.other
             let validCategory = BuiltInCategory.allCases.contains(category) ? category : BuiltInCategory.other
 
-            return TripItem(name: name, defaultPriority: priority, category: validCategory)
+            return TripItem(name: name, priority: priority, category: validCategory)
         }
     }
 }

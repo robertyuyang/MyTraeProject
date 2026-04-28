@@ -33,11 +33,8 @@ class TemplateEditViewController: UIViewController {
         view.backgroundColor = .white
         title = "编辑模板"
         
-        let doneButton = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(doneTapped))
-        navigationItem.rightBarButtonItem = doneButton
-        
-        let cancelButton = UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(cancelTapped))
-        navigationItem.leftBarButtonItem = cancelButton
+        let closeButton = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(closeTapped))
+        navigationItem.rightBarButtonItem = closeButton
     }
     
     private func setupItemList() {
@@ -51,8 +48,7 @@ class TemplateEditViewController: UIViewController {
             addVC.tripName = self.template.name
         }
         itemListVC.onDataChange = { [weak self] in
-            guard let self = self else { return }
-            self.template.items = self.itemListVC.items
+            self?.saveAndUpdate()
         }
         
         addChild(itemListVC)
@@ -68,14 +64,12 @@ class TemplateEditViewController: UIViewController {
         ])
     }
     
-    @objc private func doneTapped() {
-        var updatedTemplate = template
-        updatedTemplate.items = itemListVC.items
-        onSave?(updatedTemplate)
-        dismiss(animated: true)
+    private func saveAndUpdate() {
+        template.items = itemListVC.items
+        onSave?(template)
     }
     
-    @objc private func cancelTapped() {
+    @objc private func closeTapped() {
         dismiss(animated: true)
     }
 }

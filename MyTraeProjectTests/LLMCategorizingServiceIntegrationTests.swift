@@ -103,11 +103,11 @@ final class LLMCategorizingServiceIntegrationTests: XCTestCase {
 
             let realService = LLMCategorizingService()
             let items = realService.parseItems(from: content)
-            NSLog("=== 解析后的物品列表 ===\n%@\n=== 列表结束 ===", items.map { "[\($0.defaultPriority.title)] \($0.name) (\($0.category))" }.joined(separator: "\n"))
+            NSLog("=== 解析后的物品列表 ===\n%@\n=== 列表结束 ===", items.map { "[\($0.priority.title)] \($0.name) (\($0.category))" }.joined(separator: "\n"))
 
             XCTAssertGreaterThanOrEqual(items.count, 20, "应至少解析出20个物品")
 
-            let p0Items = items.filter { $0.defaultPriority == .p0 }
+            let p0Items = items.filter { $0.priority == .p0 }
             XCTAssertGreaterThanOrEqual(p0Items.count, 5, "应至少有5个P0物品")
             let p0Names = p0Items.map { $0.name }
             let expectedP0Keywords = ["身份证", "护照", "驾照"]
@@ -116,7 +116,7 @@ final class LLMCategorizingServiceIntegrationTests: XCTestCase {
                 XCTAssertTrue(found, "P0 物品中应包含「\(keyword)」")
             }
 
-            let p1Items = items.filter { $0.defaultPriority == .p1 }
+            let p1Items = items.filter { $0.priority == .p1 }
             let p1Names = p1Items.map { $0.name }
             let hasCoat = p1Names.contains { $0.contains("外套") }
             XCTAssertTrue(hasCoat, "P1 物品中应包含「外套」")

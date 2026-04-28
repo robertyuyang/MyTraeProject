@@ -88,13 +88,7 @@ class ItemListConfirmViewController: UIViewController {
     }
     
     @objc private func confirmButtonTapped() {
-        // 应用覆盖的优先级到实际物品上
-        var finalItems = itemListVC.items
-        for (index, item) in finalItems.enumerated() {
-            if let override = itemListVC.priorityOverrides[item.id] {
-                finalItems[index].defaultPriority = override
-            }
-        }
-        onConfirm?(finalItems)
+        // 直接使用已经修改过优先级的物品
+        onConfirm?(itemListVC.items)
     }
 }
