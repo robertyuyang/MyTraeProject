@@ -768,7 +768,7 @@ class AddItemViewController: UIViewController {
             return
         }
 
-        let items = [TripItem(name: name.trimmingCharacters(in: .whitespacesAndNewlines), defaultPriority: selectedPriority, category: selectedCategory)]
+        let items = [TripItem(name: name.trimmingCharacters(in: .whitespacesAndNewlines), priority: selectedPriority, category: selectedCategory)]
         onAddItems?(items)
         delegate?.addItemViewController(self, didAddItems: items)
         navigationController?.popViewController(animated: true)

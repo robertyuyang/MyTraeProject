@@ -28,7 +28,6 @@ class ItemListViewController: UIViewController {
     }
 
     var checkedItemIDs: Set<UUID> = []
-    var priorityOverrides: [UUID: Priority] = [:]
 
     // MARK: - Closures
     var onDataChange: (() -> Void)?
@@ -229,7 +228,7 @@ class ItemListViewController: UIViewController {
     }
 
     func priority(for item: TripItem) -> Priority {
-        return priorityOverrides[item.id] ?? item.defaultPriority
+        return item.priority
     }
 
     func isItemChecked(_ item: TripItem) -> Bool {
@@ -307,7 +306,9 @@ class ItemListViewController: UIViewController {
             btn.addAction(UIAction { [weak self] _ in
                 guard let self = self else { return }
                 self.dismissDropdown()
-                self.priorityOverrides[item.id] = p
+                if let index = self.items.firstIndex(where: { $0.id == item.id }) {
+                    self.items[index].priority = p
+                }
                 self.tableView.reloadData()
                 self.notifyDataUpdated()
             }, for: .touchUpInside)
@@ -533,39 +534,41 @@ extension ItemListViewController: UITableViewDragDelegate, UITableViewDropDelega
         for item in coordinator.items {
             guard let sourceIndexPath = item.sourceIndexPath else { continue }
 
-            tableView.performBatchUpdates({
-                let sourceCategory = sortedCategories[sourceIndexPath.section]
-                let sourceItems = groupedItems[sourceCategory]!
-                let movedItem = sourceItems[sourceIndexPath.row]
+            let sourceCategory = sortedCategories[sourceIndexPath.section]
+            let sourceItems = groupedItems[sourceCategory]!
+            let movedItem = sourceItems[sourceIndexPath.row]
 
-                guard let globalSourceIndex = items.firstIndex(where: { $0.id == movedItem.id }) else { return }
-                items.remove(at: globalSourceIndex)
+            guard let globalSourceIndex = items.firstIndex(where: { $0.id == movedItem.id }) else { continue }
+            items.remove(at: globalSourceIndex)
 
-                let destCategory = sortedCategories[destinationIndexPath.section]
-                let destItems = items.filter { $0.category == destCategory }
+            let destCategory = sortedCategories[destinationIndexPath.section]
+            let destItems = items.filter { $0.category == destCategory }
 
-                var itemToInsert = movedItem
-                itemToInsert.category = destCategory
+            var itemToInsert = movedItem
+            itemToInsert.category = destCategory
 
-                if destinationIndexPath.row >= destItems.count {
-                    if let lastItem = destItems.last,
-                       let insertAfter = items.firstIndex(where: { $0.id == lastItem.id }) {
-                        items.insert(itemToInsert, at: insertAfter + 1)
-                    } else {
-                        items.append(itemToInsert)
-                    }
+            if destinationIndexPath.row >= destItems.count {
+                if let lastItem = destItems.last,
+                   let insertAfter = items.firstIndex(where: { $0.id == lastItem.id }) {
+                    items.insert(itemToInsert, at: insertAfter + 1)
                 } else {
-                    let targetItem = destItems[destinationIndexPath.row]
-                    if let insertAt = items.firstIndex(where: { $0.id == targetItem.id }) {
-                        items.insert(itemToInsert, at: insertAt)
-                    }
+                    items.append(itemToInsert)
                 }
-            })
+            } else {
+                let targetItem = destItems[destinationIndexPath.row]
+                if let insertAt = items.firstIndex(where: { $0.id == targetItem.id }) {
+                    items.insert(itemToInsert, at: insertAt)
+                } else {
+                    items.append(itemToInsert)
+                }
+            }
 
             coordinator.drop(item.dragItem, toRowAt: destinationIndexPath)
         }
 
-        tableView.reloadData()
+        UIView.performWithoutAnimation {
+            tableView.reloadData()
+        }
         notifyDataUpdated()
     }
 }

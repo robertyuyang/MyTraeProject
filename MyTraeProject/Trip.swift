@@ -66,13 +66,13 @@ enum BuiltInCategory {
 struct TripItem: Codable, Equatable {
     let id: UUID
     var name: String
-    var defaultPriority: Priority
+    var priority: Priority
     var category: Category
     
-    init(name: String, defaultPriority: Priority, category: Category = BuiltInCategory.other) {
+    init(name: String, priority: Priority, category: Category = BuiltInCategory.other) {
         self.id = UUID()
         self.name = name
-        self.defaultPriority = defaultPriority
+        self.priority = priority
         self.category = category
     }
 }
@@ -97,7 +97,7 @@ struct TripTemplate: Codable, Equatable {
     func toTrip() -> Trip {
         var trip = Trip(name: name)
         trip.items = items.map { item in
-            TripItem(name: item.name, defaultPriority: item.defaultPriority, category: item.category)
+            TripItem(name: item.name, priority: item.priority, category: item.category)
         }
         return trip
     }
@@ -108,7 +108,6 @@ struct Trip: Codable, Equatable {
     var name: String
     var items: [TripItem]
     var checkedItemIDs: Set<UUID>
-    var priorityOverrides: [UUID: Priority]
     var imageUrl: String?
     var createdAt: Date
     
@@ -117,7 +116,6 @@ struct Trip: Codable, Equatable {
         self.name = name
         self.items = []
         self.checkedItemIDs = []
-        self.priorityOverrides = [:]
         self.imageUrl = nil
         self.createdAt = Date()
     }
@@ -141,14 +139,6 @@ struct Trip: Codable, Equatable {
         } else {
             checkedItemIDs.insert(item.id)
         }
-    }
-    
-    func priority(for item: TripItem) -> Priority {
-        priorityOverrides[item.id] ?? item.defaultPriority
-    }
-    
-    mutating func setPriority(_ priority: Priority, for item: TripItem) {
-        priorityOverrides[item.id] = priority
     }
 }
 
@@ -201,20 +191,20 @@ class DataManager {
                 name: "默认旅行模板",
                 description: "标准旅行必备清单",
                 items: [
-                    TripItem(name: "身份证", defaultPriority: .p0, category: BuiltInCategory.documentsAndIDs),
-                    TripItem(name: "内衣裤", defaultPriority: .p0, category: BuiltInCategory.clothing),
-                    TripItem(name: "睡衣睡裤", defaultPriority: .p0, category: BuiltInCategory.clothing),
-                    TripItem(name: "袜子", defaultPriority: .p0, category: BuiltInCategory.clothing),
-                    TripItem(name: "外套", defaultPriority: .p1, category: BuiltInCategory.clothing),
-                    TripItem(name: "纸巾", defaultPriority: .p1, category: BuiltInCategory.other),
-                    TripItem(name: "马桶垫", defaultPriority: .p2, category: BuiltInCategory.other),
-                    TripItem(name: "洗面奶", defaultPriority: .p0, category: BuiltInCategory.toiletries),
-                    TripItem(name: "牙刷牙膏", defaultPriority: .p1, category: BuiltInCategory.toiletries),
-                    TripItem(name: "剃须刀", defaultPriority: .p0, category: BuiltInCategory.toiletries),
-                    TripItem(name: "手机", defaultPriority: .p0, category: BuiltInCategory.electronics),
-                    TripItem(name: "耳机", defaultPriority: .p0, category: BuiltInCategory.electronics),
-                    TripItem(name: "充电头 手机充电线 手表充电线", defaultPriority: .p0, category: BuiltInCategory.electronics),
-                    TripItem(name: "充电宝", defaultPriority: .p0, category: BuiltInCategory.electronics)
+                    TripItem(name: "身份证", priority: .p0, category: BuiltInCategory.documentsAndIDs),
+                    TripItem(name: "内衣裤", priority: .p0, category: BuiltInCategory.clothing),
+                    TripItem(name: "睡衣睡裤", priority: .p0, category: BuiltInCategory.clothing),
+                    TripItem(name: "袜子", priority: .p0, category: BuiltInCategory.clothing),
+                    TripItem(name: "外套", priority: .p1, category: BuiltInCategory.clothing),
+                    TripItem(name: "纸巾", priority: .p1, category: BuiltInCategory.other),
+                    TripItem(name: "马桶垫", priority: .p2, category: BuiltInCategory.other),
+                    TripItem(name: "洗面奶", priority: .p0, category: BuiltInCategory.toiletries),
+                    TripItem(name: "牙刷牙膏", priority: .p1, category: BuiltInCategory.toiletries),
+                    TripItem(name: "剃须刀", priority: .p0, category: BuiltInCategory.toiletries),
+                    TripItem(name: "手机", priority: .p0, category: BuiltInCategory.electronics),
+                    TripItem(name: "耳机", priority: .p0, category: BuiltInCategory.electronics),
+                    TripItem(name: "充电头 手机充电线 手表充电线", priority: .p0, category: BuiltInCategory.electronics),
+                    TripItem(name: "充电宝", priority: .p0, category: BuiltInCategory.electronics)
                 ],
                 isBuiltIn: true
             ),
@@ -222,14 +212,14 @@ class DataManager {
                 name: "周末短途游",
                 description: "适合2-3天的短途旅行，包含必备物品清单",
                 items: [
-                    TripItem(name: "便携洗漱包", defaultPriority: .p0, category: BuiltInCategory.toiletries),
-                    TripItem(name: "换洗衣物", defaultPriority: .p0, category: BuiltInCategory.clothing),
-                    TripItem(name: "手机充电器", defaultPriority: .p0, category: BuiltInCategory.electronics),
-                    TripItem(name: "身份证/证件", defaultPriority: .p0, category: BuiltInCategory.documentsAndIDs),
-                    TripItem(name: "舒适鞋子", defaultPriority: .p1, category: BuiltInCategory.footwear),
-                    TripItem(name: "便携充电宝", defaultPriority: .p1, category: BuiltInCategory.electronics),
-                    TripItem(name: "雨伞/雨衣", defaultPriority: .p2, category: BuiltInCategory.other),
-                    TripItem(name: "墨镜", defaultPriority: .p2, category: BuiltInCategory.accessories)
+                    TripItem(name: "便携洗漱包", priority: .p0, category: BuiltInCategory.toiletries),
+                    TripItem(name: "换洗衣物", priority: .p0, category: BuiltInCategory.clothing),
+                    TripItem(name: "手机充电器", priority: .p0, category: BuiltInCategory.electronics),
+                    TripItem(name: "身份证/证件", priority: .p0, category: BuiltInCategory.documentsAndIDs),
+                    TripItem(name: "舒适鞋子", priority: .p1, category: BuiltInCategory.footwear),
+                    TripItem(name: "便携充电宝", priority: .p1, category: BuiltInCategory.electronics),
+                    TripItem(name: "雨伞/雨衣", priority: .p2, category: BuiltInCategory.other),
+                    TripItem(name: "墨镜", priority: .p2, category: BuiltInCategory.accessories)
                 ],
                 isBuiltIn: true
             ),
@@ -237,14 +227,14 @@ class DataManager {
                 name: "商务出行",
                 description: "适合商务旅行，包含工作和生活必需品",
                 items: [
-                    TripItem(name: "笔记本电脑", defaultPriority: .p0, category: BuiltInCategory.electronics),
-                    TripItem(name: "商务正装", defaultPriority: .p0, category: BuiltInCategory.clothing),
-                    TripItem(name: "身份证件", defaultPriority: .p0, category: BuiltInCategory.documentsAndIDs),
-                    TripItem(name: "名片", defaultPriority: .p0, category: BuiltInCategory.documentsAndIDs),
-                    TripItem(name: "便携洗漱用品", defaultPriority: .p1, category: BuiltInCategory.toiletries),
-                    TripItem(name: "笔记本和笔", defaultPriority: .p1, category: BuiltInCategory.accessories),
-                    TripItem(name: "便携U盘/移动硬盘", defaultPriority: .p1, category: BuiltInCategory.electronics),
-                    TripItem(name: "商务皮鞋", defaultPriority: .p2, category: BuiltInCategory.footwear)
+                    TripItem(name: "笔记本电脑", priority: .p0, category: BuiltInCategory.electronics),
+                    TripItem(name: "商务正装", priority: .p0, category: BuiltInCategory.clothing),
+                    TripItem(name: "身份证件", priority: .p0, category: BuiltInCategory.documentsAndIDs),
+                    TripItem(name: "名片", priority: .p0, category: BuiltInCategory.documentsAndIDs),
+                    TripItem(name: "便携洗漱用品", priority: .p1, category: BuiltInCategory.toiletries),
+                    TripItem(name: "笔记本和笔", priority: .p1, category: BuiltInCategory.accessories),
+                    TripItem(name: "便携U盘/移动硬盘", priority: .p1, category: BuiltInCategory.electronics),
+                    TripItem(name: "商务皮鞋", priority: .p2, category: BuiltInCategory.footwear)
                 ],
                 isBuiltIn: true
             ),
@@ -252,15 +242,15 @@ class DataManager {
                 name: "海滩度假",
                 description: "享受阳光沙滩的必备清单",
                 items: [
-                    TripItem(name: "泳衣", defaultPriority: .p0, category: BuiltInCategory.clothing),
-                    TripItem(name: "防晒霜", defaultPriority: .p0, category: BuiltInCategory.toiletries),
-                    TripItem(name: "太阳帽", defaultPriority: .p0, category: BuiltInCategory.accessories),
-                    TripItem(name: "墨镜", defaultPriority: .p0, category: BuiltInCategory.accessories),
-                    TripItem(name: "沙滩毛巾", defaultPriority: .p1, category: BuiltInCategory.other),
-                    TripItem(name: "人字拖", defaultPriority: .p1, category: BuiltInCategory.footwear),
-                    TripItem(name: "防水手机袋", defaultPriority: .p1, category: BuiltInCategory.accessories),
-                    TripItem(name: "相机/运动相机", defaultPriority: .p2, category: BuiltInCategory.photography),
-                    TripItem(name: "沙滩玩具", defaultPriority: .p2, category: BuiltInCategory.other)
+                    TripItem(name: "泳衣", priority: .p0, category: BuiltInCategory.clothing),
+                    TripItem(name: "防晒霜", priority: .p0, category: BuiltInCategory.toiletries),
+                    TripItem(name: "太阳帽", priority: .p0, category: BuiltInCategory.accessories),
+                    TripItem(name: "墨镜", priority: .p0, category: BuiltInCategory.accessories),
+                    TripItem(name: "沙滩毛巾", priority: .p1, category: BuiltInCategory.other),
+                    TripItem(name: "人字拖", priority: .p1, category: BuiltInCategory.footwear),
+                    TripItem(name: "防水手机袋", priority: .p1, category: BuiltInCategory.accessories),
+                    TripItem(name: "相机/运动相机", priority: .p2, category: BuiltInCategory.photography),
+                    TripItem(name: "沙滩玩具", priority: .p2, category: BuiltInCategory.other)
                 ],
                 isBuiltIn: true
             ),
@@ -268,17 +258,17 @@ class DataManager {
                 name: "登山/徒步",
                 description: "适合户外活动的完整装备清单",
                 items: [
-                    TripItem(name: "登山鞋", defaultPriority: .p0, category: BuiltInCategory.footwear),
-                    TripItem(name: "登山杖", defaultPriority: .p0, category: BuiltInCategory.outdoor),
-                    TripItem(name: "背包", defaultPriority: .p0, category: BuiltInCategory.accessories),
-                    TripItem(name: "水袋/水壶", defaultPriority: .p0, category: BuiltInCategory.foodAndDrinks),
-                    TripItem(name: "冲锋衣", defaultPriority: .p0, category: BuiltInCategory.clothing),
-                    TripItem(name: "速干衣裤", defaultPriority: .p1, category: BuiltInCategory.clothing),
-                    TripItem(name: "急救包", defaultPriority: .p1, category: BuiltInCategory.health),
-                    TripItem(name: "头灯", defaultPriority: .p1, category: BuiltInCategory.electronics),
-                    TripItem(name: "食物/能量棒", defaultPriority: .p1, category: BuiltInCategory.foodAndDrinks),
-                    TripItem(name: "指南针/地图", defaultPriority: .p2, category: BuiltInCategory.accessories),
-                    TripItem(name: "手套", defaultPriority: .p2, category: BuiltInCategory.accessories)
+                    TripItem(name: "登山鞋", priority: .p0, category: BuiltInCategory.footwear),
+                    TripItem(name: "登山杖", priority: .p0, category: BuiltInCategory.outdoor),
+                    TripItem(name: "背包", priority: .p0, category: BuiltInCategory.accessories),
+                    TripItem(name: "水袋/水壶", priority: .p0, category: BuiltInCategory.foodAndDrinks),
+                    TripItem(name: "冲锋衣", priority: .p0, category: BuiltInCategory.clothing),
+                    TripItem(name: "速干衣裤", priority: .p1, category: BuiltInCategory.clothing),
+                    TripItem(name: "急救包", priority: .p1, category: BuiltInCategory.health),
+                    TripItem(name: "头灯", priority: .p1, category: BuiltInCategory.electronics),
+                    TripItem(name: "食物/能量棒", priority: .p1, category: BuiltInCategory.foodAndDrinks),
+                    TripItem(name: "指南针/地图", priority: .p2, category: BuiltInCategory.accessories),
+                    TripItem(name: "手套", priority: .p2, category: BuiltInCategory.accessories)
                 ],
                 isBuiltIn: true
             ),
@@ -286,17 +276,17 @@ class DataManager {
                 name: "长途国际旅行",
                 description: "适合跨洲际的长途旅行，包含所有必备品",
                 items: [
-                    TripItem(name: "护照", defaultPriority: .p0, category: BuiltInCategory.documentsAndIDs),
-                    TripItem(name: "机票/行程单", defaultPriority: .p0, category: BuiltInCategory.documentsAndIDs),
-                    TripItem(name: "签证材料", defaultPriority: .p0, category: BuiltInCategory.documentsAndIDs),
-                    TripItem(name: "电源转换插头", defaultPriority: .p0, category: BuiltInCategory.electronics),
-                    TripItem(name: "旅行洗漱包", defaultPriority: .p0, category: BuiltInCategory.toiletries),
-                    TripItem(name: "换洗衣物", defaultPriority: .p0, category: BuiltInCategory.clothing),
-                    TripItem(name: "常备药品", defaultPriority: .p1, category: BuiltInCategory.health),
-                    TripItem(name: "国际信用卡", defaultPriority: .p1, category: BuiltInCategory.documentsAndIDs),
-                    TripItem(name: "充电宝", defaultPriority: .p1, category: BuiltInCategory.electronics),
-                    TripItem(name: "颈枕/眼罩", defaultPriority: .p2, category: BuiltInCategory.accessories),
-                    TripItem(name: "行李牌", defaultPriority: .p2, category: BuiltInCategory.accessories)
+                    TripItem(name: "护照", priority: .p0, category: BuiltInCategory.documentsAndIDs),
+                    TripItem(name: "机票/行程单", priority: .p0, category: BuiltInCategory.documentsAndIDs),
+                    TripItem(name: "签证材料", priority: .p0, category: BuiltInCategory.documentsAndIDs),
+                    TripItem(name: "电源转换插头", priority: .p0, category: BuiltInCategory.electronics),
+                    TripItem(name: "旅行洗漱包", priority: .p0, category: BuiltInCategory.toiletries),
+                    TripItem(name: "换洗衣物", priority: .p0, category: BuiltInCategory.clothing),
+                    TripItem(name: "常备药品", priority: .p1, category: BuiltInCategory.health),
+                    TripItem(name: "国际信用卡", priority: .p1, category: BuiltInCategory.documentsAndIDs),
+                    TripItem(name: "充电宝", priority: .p1, category: BuiltInCategory.electronics),
+                    TripItem(name: "颈枕/眼罩", priority: .p2, category: BuiltInCategory.accessories),
+                    TripItem(name: "行李牌", priority: .p2, category: BuiltInCategory.accessories)
                 ],
                 isBuiltIn: true
             )

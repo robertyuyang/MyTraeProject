@@ -65,10 +65,10 @@ final class LLMCategorizingServiceTests: XCTestCase {
 
         XCTAssertEqual(items.count, 2)
         XCTAssertEqual(items[0].name, "护照")
-        XCTAssertEqual(items[0].defaultPriority, .p0)
+        XCTAssertEqual(items[0].priority, .p0)
         XCTAssertEqual(items[0].category, BuiltInCategory.documentsAndIDs)
         XCTAssertEqual(items[1].name, "充电器")
-        XCTAssertEqual(items[1].defaultPriority, .p1)
+        XCTAssertEqual(items[1].priority, .p1)
         XCTAssertEqual(items[1].category, BuiltInCategory.electronics)
     }
 
@@ -82,7 +82,7 @@ final class LLMCategorizingServiceTests: XCTestCase {
 
         XCTAssertEqual(items.count, 1)
         XCTAssertEqual(items[0].name, "牙刷")
-        XCTAssertEqual(items[0].defaultPriority, .p2)
+        XCTAssertEqual(items[0].priority, .p2)
         XCTAssertEqual(items[0].category, BuiltInCategory.toiletries)
     }
 
@@ -103,7 +103,7 @@ final class LLMCategorizingServiceTests: XCTestCase {
         let items = sut.parseItems(from: json)
 
         XCTAssertEqual(items.count, 1)
-        XCTAssertEqual(items[0].defaultPriority, .p2)
+        XCTAssertEqual(items[0].priority, .p2)
     }
 
     func testParseItemsWithInvalidPriority() {
@@ -113,7 +113,7 @@ final class LLMCategorizingServiceTests: XCTestCase {
         let items = sut.parseItems(from: json)
 
         XCTAssertEqual(items.count, 1)
-        XCTAssertEqual(items[0].defaultPriority, .p2)
+        XCTAssertEqual(items[0].priority, .p2)
     }
 
     func testParseItemsWithEmptyName() {
@@ -169,10 +169,10 @@ final class LLMCategorizingServiceTests: XCTestCase {
             case .success(let items):
                 XCTAssertEqual(items.count, 2)
                 XCTAssertEqual(items[0].name, "身份证")
-                XCTAssertEqual(items[0].defaultPriority, .p0)
+                XCTAssertEqual(items[0].priority, .p0)
                 XCTAssertEqual(items[0].category, BuiltInCategory.documentsAndIDs)
                 XCTAssertEqual(items[1].name, "T恤")
-                XCTAssertEqual(items[1].defaultPriority, .p2)
+                XCTAssertEqual(items[1].priority, .p2)
                 XCTAssertEqual(items[1].category, BuiltInCategory.clothing)
             case .failure(let error):
                 XCTFail("Expected success but got error: \(error)")

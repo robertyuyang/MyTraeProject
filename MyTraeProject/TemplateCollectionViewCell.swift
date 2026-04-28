@@ -158,7 +158,7 @@ class TemplateCollectionViewCell: UICollectionViewCell {
         var p2Count = 0
         
         for item in template.items {
-            switch item.defaultPriority {
+            switch item.priority {
             case .p0: p0Count += 1
             case .p1: p1Count += 1
             case .p2: p2Count += 1
