@@ -18,12 +18,28 @@ class TripsViewController2: UIViewController {
         setupUI()
         setupViewModel()
         viewModel.loadData()
+        
+        // 监听从模板创建trip的通知
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleTripCreatedFromTemplate),
+            name: NSNotification.Name("TripCreatedFromTemplate"),
+            object: nil
+        )
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         // 确保导航栏始终隐藏
         navigationController?.setNavigationBarHidden(true, animated: false)
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    @objc private func handleTripCreatedFromTemplate() {
+        viewModel.loadData()
     }
     
     private func setupViewModel() {

@@ -7,6 +7,227 @@
 
 import UIKit
 
+enum TemplateOverflowMenuAction {
+    case createTrip
+    case duplicate
+    case rename
+    case delete
+}
+
+class TemplateOverflowMenuView: UIView {
+    
+    var onAction: ((TemplateOverflowMenuAction) -> Void)?
+    private let backgroundOverlay = UIButton(type: .custom)
+    private let showRenameAndDelete: Bool
+    
+    init(showRenameAndDelete: Bool = true) {
+        self.showRenameAndDelete = showRenameAndDelete
+        super.init(frame: .zero)
+        setupUI()
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    private func setupUI() {
+        backgroundColor = .white
+        layer.cornerRadius = 12
+        layer.shadowColor = UIColor.black.cgColor
+        layer.shadowOffset = CGSize(width: 0, height: 4)
+        layer.shadowOpacity = 0.1
+        layer.shadowRadius = 24
+        layer.borderWidth = 1
+        layer.borderColor = UIColor(red: 193/255, green: 198/255, blue: 215/255, alpha: 0.2).cgColor
+        
+        let stackView = UIStackView()
+        stackView.axis = .vertical
+        stackView.alignment = .fill
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(stackView)
+        
+        let createButton = createMenuItem(
+            icon: "plus",
+            title: "创建行程",
+            titleColor: UIColor(red: 26/255, green: 27/255, blue: 31/255, alpha: 1.0),
+            action: #selector(createTripTapped),
+            bottomPadding: 12
+        )
+        stackView.addArrangedSubview(createButton)
+        
+        if showRenameAndDelete {
+            let duplicateButton = createMenuItem(
+                icon: "doc.on.doc",
+                title: "复制",
+                titleColor: UIColor(red: 26/255, green: 27/255, blue: 31/255, alpha: 1.0),
+                action: #selector(duplicateTapped),
+                bottomPadding: 12
+            )
+            
+            let renameButton = createMenuItem(
+                icon: "pencil",
+                title: "重命名",
+                titleColor: UIColor(red: 26/255, green: 27/255, blue: 31/255, alpha: 1.0),
+                action: #selector(renameTapped),
+                bottomPadding: 16
+            )
+            
+            let divider = UIView()
+            divider.backgroundColor = UIColor(red: 193/255, green: 198/255, blue: 215/255, alpha: 0.15)
+            divider.translatesAutoresizingMaskIntoConstraints = false
+            divider.heightAnchor.constraint(equalToConstant: 1).isActive = true
+            
+            let dividerContainer = UIView()
+            dividerContainer.translatesAutoresizingMaskIntoConstraints = false
+            dividerContainer.addSubview(divider)
+            NSLayoutConstraint.activate([
+                divider.leadingAnchor.constraint(equalTo: dividerContainer.leadingAnchor, constant: 8),
+                divider.trailingAnchor.constraint(equalTo: dividerContainer.trailingAnchor, constant: -8),
+                divider.topAnchor.constraint(equalTo: dividerContainer.topAnchor),
+                divider.bottomAnchor.constraint(equalTo: dividerContainer.bottomAnchor)
+            ])
+            
+            let deleteButton = createMenuItem(
+                icon: "trash",
+                title: "删除",
+                titleColor: UIColor(red: 188/255, green: 0/255, blue: 10/255, alpha: 1.0),
+                action: #selector(deleteTapped),
+                topPadding: 16,
+                bottomPadding: 12
+            )
+            
+            stackView.addArrangedSubview(duplicateButton)
+            stackView.addArrangedSubview(renameButton)
+            stackView.addArrangedSubview(dividerContainer)
+            stackView.addArrangedSubview(deleteButton)
+        }
+        
+        NSLayoutConstraint.activate([
+            stackView.topAnchor.constraint(equalTo: topAnchor, constant: 8),
+            stackView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            stackView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            stackView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -8)
+        ])
+        
+        translatesAutoresizingMaskIntoConstraints = false
+        widthAnchor.constraint(equalToConstant: 224).isActive = true
+    }
+    
+    private func createMenuItem(
+        icon: String,
+        title: String,
+        titleColor: UIColor,
+        action: Selector,
+        topPadding: CGFloat = 12,
+        bottomPadding: CGFloat = 12
+    ) -> UIView {
+        let container = UIView()
+        container.translatesAutoresizingMaskIntoConstraints = false
+        
+        let iconView = UIImageView(image: UIImage(systemName: icon))
+        iconView.tintColor = titleColor
+        iconView.contentMode = .scaleAspectFit
+        iconView.translatesAutoresizingMaskIntoConstraints = false
+        
+        let label = UILabel()
+        label.text = title
+        label.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+        label.textColor = titleColor
+        label.translatesAutoresizingMaskIntoConstraints = false
+        
+        let tapButton = UIButton(type: .system)
+        tapButton.translatesAutoresizingMaskIntoConstraints = false
+        tapButton.addTarget(self, action: action, for: .touchUpInside)
+        
+        container.addSubview(iconView)
+        container.addSubview(label)
+        container.addSubview(tapButton)
+        
+        NSLayoutConstraint.activate([
+            iconView.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
+            iconView.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            iconView.widthAnchor.constraint(equalToConstant: 16),
+            iconView.heightAnchor.constraint(equalToConstant: 16),
+            
+            label.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: 12),
+            label.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            label.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+            
+            container.heightAnchor.constraint(equalToConstant: topPadding + 16 + (bottomPadding - 12)),
+            
+            tapButton.topAnchor.constraint(equalTo: container.topAnchor),
+            tapButton.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            tapButton.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            tapButton.bottomAnchor.constraint(equalTo: container.bottomAnchor)
+        ])
+        
+        return container
+    }
+    
+    func show(in parentView: UIView, anchorPoint: CGPoint) {
+        backgroundOverlay.frame = parentView.bounds
+        backgroundOverlay.backgroundColor = .clear
+        backgroundOverlay.addTarget(self, action: #selector(dismiss), for: .touchUpInside)
+        parentView.addSubview(backgroundOverlay)
+        
+        parentView.addSubview(self)
+        
+        alpha = 0
+        transform = CGAffineTransform(scaleX: 0.9, y: 0.9)
+        
+        let menuWidth: CGFloat = 224
+        var x = anchorPoint.x - menuWidth
+        let y = anchorPoint.y + 4
+        
+        if x < 16 { x = 16 }
+        if x + menuWidth > parentView.bounds.width - 16 {
+            x = parentView.bounds.width - menuWidth - 16
+        }
+        
+        NSLayoutConstraint.activate([
+            topAnchor.constraint(equalTo: parentView.topAnchor, constant: y),
+            leadingAnchor.constraint(equalTo: parentView.leadingAnchor, constant: x)
+        ])
+        
+        layoutIfNeeded()
+        
+        UIView.animate(withDuration: 0.2, delay: 0, options: .curveEaseOut) {
+            self.alpha = 1
+            self.transform = .identity
+        }
+    }
+    
+    @objc func dismiss() {
+        UIView.animate(withDuration: 0.15, delay: 0, options: .curveEaseIn, animations: {
+            self.alpha = 0
+            self.transform = CGAffineTransform(scaleX: 0.9, y: 0.9)
+        }) { _ in
+            self.backgroundOverlay.removeFromSuperview()
+            self.removeFromSuperview()
+        }
+    }
+    
+    @objc private func createTripTapped() {
+        dismiss()
+        onAction?(.createTrip)
+    }
+    
+    @objc private func duplicateTapped() {
+        dismiss()
+        onAction?(.duplicate)
+    }
+    
+    @objc private func renameTapped() {
+        dismiss()
+        onAction?(.rename)
+    }
+    
+    @objc private func deleteTapped() {
+        dismiss()
+        onAction?(.delete)
+    }
+}
+
 class TemplatesViewController: UIViewController {
     
     private let collectionView: UICollectionView
@@ -144,30 +365,26 @@ class TemplatesViewController: UIViewController {
         present(navVC, animated: true)
     }
     
-    private func showOverflowMenu(for index: Int, template: TripTemplate) {
-        let menu = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+    private func showOverflowMenu(for index: Int, template: TripTemplate, from cell: TemplateCollectionViewCell) {
+        let menuView = TemplateOverflowMenuView(showRenameAndDelete: !template.isBuiltIn)
         
-        menu.addAction(UIAlertAction(title: "使用为行程", style: .default) { [weak self] _ in
-            self?.useAsTrip(template: template)
-        })
-        
-        if !template.isBuiltIn {
-            menu.addAction(UIAlertAction(title: "复制", style: .default) { [weak self] _ in
-                self?.viewModel.duplicateTemplate(at: index)
-            })
-            
-            menu.addAction(UIAlertAction(title: "重命名", style: .default) { [weak self] _ in
-                self?.renameTemplate(at: index)
-            })
-            
-            menu.addAction(UIAlertAction(title: "删除", style: .destructive) { [weak self] _ in
-                self?.deleteTemplate(at: index)
-            })
+        menuView.onAction = { [weak self] action in
+            guard let self = self else { return }
+            switch action {
+            case .createTrip:
+                self.createTrip(from: template)
+            case .duplicate:
+                self.viewModel.duplicateTemplate(at: index)
+            case .rename:
+                self.renameTemplate(at: index)
+            case .delete:
+                self.deleteTemplate(at: index)
+            }
         }
         
-        menu.addAction(UIAlertAction(title: "取消", style: .cancel))
-        
-        present(menu, animated: true)
+        let cellFrame = cell.convert(cell.bounds, to: view)
+        let anchorPoint = CGPoint(x: cellFrame.maxX - 12, y: cellFrame.minY + 44)
+        menuView.show(in: view, anchorPoint: anchorPoint)
     }
     
     private func renameTemplate(at index: Int) {
@@ -189,30 +406,25 @@ class TemplatesViewController: UIViewController {
         present(alert, animated: true)
     }
     
-    private func useAsTrip(template: TripTemplate) {
-        let alert = UIAlertController(title: "使用模板", message: "基于模板创建新行程", preferredStyle: .alert)
+    private func createTrip(from template: TripTemplate) {
+        let alert = UIAlertController(title: "创建行程", message: "基于模板创建新行程", preferredStyle: .alert)
+        alert.addTextField { textField in
+            textField.placeholder = "请输入行程名称"
+            textField.text = template.name
+        }
         
-        let confirmAction = UIAlertAction(title: "创建行程", style: .default) { [weak self] _ in
-            guard let self = self else { return }
+        let confirmAction = UIAlertAction(title: "创建", style: .default) { [weak self] _ in
+            guard let self = self, let tripName = alert.textFields?.first?.text, !tripName.isEmpty else { return }
             var newTrip = template.toTrip()
-            let nameAlert = UIAlertController(title: "命名行程", message: "请输入行程名称", preferredStyle: .alert)
-            nameAlert.addTextField { textField in
-                textField.text = newTrip.name
-            }
+            newTrip.name = tripName
+            var trips = DataManager.shared.loadTrips()
+            trips.insert(newTrip, at: 0)
+            DataManager.shared.saveTrips(trips)
+            NotificationCenter.default.post(name: NSNotification.Name("TripCreatedFromTemplate"), object: nil)
             
-            let createAction = UIAlertAction(title: "创建", style: .default) { _ in
-                guard let tripName = nameAlert.textFields?.first?.text, !tripName.isEmpty else { return }
-                newTrip.name = tripName
-                var trips = DataManager.shared.loadTrips()
-                trips.insert(newTrip, at: 0)
-                DataManager.shared.saveTrips(trips)
-                NotificationCenter.default.post(name: NSNotification.Name("TripCreatedFromTemplate"), object: nil)
-            }
-            
-            let cancelAction = UIAlertAction(title: "取消", style: .cancel)
-            nameAlert.addAction(createAction)
-            nameAlert.addAction(cancelAction)
-            self.present(nameAlert, animated: true)
+            let successAlert = UIAlertController(title: "创建成功", message: "行程已创建", preferredStyle: .alert)
+            successAlert.addAction(UIAlertAction(title: "确定", style: .default))
+            self.present(successAlert, animated: true)
         }
         
         let cancelAction = UIAlertAction(title: "取消", style: .cancel)
@@ -248,8 +460,9 @@ extension TemplatesViewController: UICollectionViewDataSource, UICollectionViewD
         let template = viewModel.template(at: indexPath.item)
         cell.configure(template: template)
         
-        cell.onMenuTapped = { [weak self] in
-            self?.showOverflowMenu(for: indexPath.item, template: template)
+        cell.onMenuTapped = { [weak self, weak cell] in
+            guard let self = self, let cell = cell else { return }
+            self.showOverflowMenu(for: indexPath.item, template: template, from: cell)
         }
         
         return cell
@@ -258,7 +471,7 @@ extension TemplatesViewController: UICollectionViewDataSource, UICollectionViewD
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         let spacing: CGFloat = 16
         let width = (collectionView.bounds.width - spacing * 3) / 2
-        return CGSize(width: width, height: 160)
+        return CGSize(width: width, height: 120)
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
@@ -276,8 +489,11 @@ class TemplateCollectionViewCell: UICollectionViewCell {
     private let p0Label = UILabel()
     private let p1Label = UILabel()
     private let p2Label = UILabel()
+    private var p0Container: UIView?
+    private var p1Container: UIView?
+    private var p2Container: UIView?
+    private let totalLabel = UILabel()
     private let menuButton = UIButton(type: .system)
-    private let builtInBadge = UIView()
     
     var onMenuTapped: (() -> Void)?
     
@@ -301,7 +517,7 @@ class TemplateCollectionViewCell: UICollectionViewCell {
         cardView.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(cardView)
         
-        nameLabel.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
+        nameLabel.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
         nameLabel.textColor = .black
         nameLabel.numberOfLines = 2
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -309,48 +525,33 @@ class TemplateCollectionViewCell: UICollectionViewCell {
         
         priorityStackView.axis = .horizontal
         priorityStackView.spacing = 8
+        priorityStackView.alignment = .center
         priorityStackView.translatesAutoresizingMaskIntoConstraints = false
         cardView.addSubview(priorityStackView)
         
-        for (label, color, title) in [(p0Label, UIColor.systemRed, "P0"), (p1Label, UIColor.systemOrange, "P1"), (p2Label, UIColor.systemBlue, "P2")] {
-            let container = UIView()
-            container.translatesAutoresizingMaskIntoConstraints = false
-            
-            let badge = UIView()
-            badge.backgroundColor = color
-            badge.layer.cornerRadius = 4
-            badge.translatesAutoresizingMaskIntoConstraints = false
-            container.addSubview(badge)
-            
-            label.font = UIFont.systemFont(ofSize: 12, weight: .bold)
-            label.textColor = .white
-            label.textAlignment = .center
-            label.translatesAutoresizingMaskIntoConstraints = false
-            badge.addSubview(label)
-            
-            let titleLabel = UILabel()
-            titleLabel.text = title
-            titleLabel.font = UIFont.systemFont(ofSize: 10, weight: .medium)
-            titleLabel.textColor = UIColor(red: 142/255, green: 142/255, blue: 147/255, alpha: 1.0)
-            titleLabel.translatesAutoresizingMaskIntoConstraints = false
-            container.addSubview(titleLabel)
-            
-            NSLayoutConstraint.activate([
-                badge.topAnchor.constraint(equalTo: container.topAnchor),
-                badge.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-                badge.widthAnchor.constraint(equalToConstant: 28),
-                badge.heightAnchor.constraint(equalToConstant: 20),
-                
-                label.centerXAnchor.constraint(equalTo: badge.centerXAnchor),
-                label.centerYAnchor.constraint(equalTo: badge.centerYAnchor),
-                
-                titleLabel.topAnchor.constraint(equalTo: badge.bottomAnchor, constant: 4),
-                titleLabel.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-                titleLabel.bottomAnchor.constraint(equalTo: container.bottomAnchor)
-            ])
-            
-            priorityStackView.addArrangedSubview(container)
-        }
+        // 创建 P0 容器
+        let p0Cont = createPriorityContainer(label: p0Label, color: UIColor.systemRed, title: "P0")
+        p0Container = p0Cont
+        priorityStackView.addArrangedSubview(p0Cont)
+        
+        // 创建 P1 容器
+        let p1Cont = createPriorityContainer(label: p1Label, color: UIColor.systemOrange, title: "P1")
+        p1Container = p1Cont
+        priorityStackView.addArrangedSubview(p1Cont)
+        
+        // 创建 P2 容器
+        let p2Cont = createPriorityContainer(label: p2Label, color: UIColor.systemBlue, title: "P2")
+        p2Container = p2Cont
+        priorityStackView.addArrangedSubview(p2Cont)
+        
+        totalLabel.font = UIFont.systemFont(ofSize: 14, weight: .semibold)
+        totalLabel.textColor = .black
+        totalLabel.backgroundColor = UIColor(red: 142/255, green: 142/255, blue: 147/255, alpha: 0.12)
+        totalLabel.textAlignment = .center
+        totalLabel.layer.cornerRadius = 14
+        totalLabel.clipsToBounds = true
+        totalLabel.translatesAutoresizingMaskIntoConstraints = false
+        cardView.addSubview(totalLabel)
         
         menuButton.setImage(UIImage(systemName: "ellipsis"), for: .normal)
         menuButton.tintColor = UIColor(red: 142/255, green: 142/255, blue: 147/255, alpha: 1.0)
@@ -358,45 +559,30 @@ class TemplateCollectionViewCell: UICollectionViewCell {
         menuButton.addTarget(self, action: #selector(menuButtonTapped), for: .touchUpInside)
         cardView.addSubview(menuButton)
         
-        builtInBadge.backgroundColor = UIColor(red: 142/255, green: 142/255, blue: 147/255, alpha: 0.1)
-        builtInBadge.layer.cornerRadius = 4
-        builtInBadge.translatesAutoresizingMaskIntoConstraints = false
-        let builtInLabel = UILabel()
-        builtInLabel.text = "内置"
-        builtInLabel.font = UIFont.systemFont(ofSize: 10, weight: .semibold)
-        builtInLabel.textColor = UIColor(red: 142/255, green: 142/255, blue: 147/255, alpha: 1.0)
-        builtInLabel.translatesAutoresizingMaskIntoConstraints = false
-        builtInBadge.addSubview(builtInLabel)
-        NSLayoutConstraint.activate([
-            builtInLabel.centerXAnchor.constraint(equalTo: builtInBadge.centerXAnchor),
-            builtInLabel.centerYAnchor.constraint(equalTo: builtInBadge.centerYAnchor),
-            builtInLabel.leadingAnchor.constraint(equalTo: builtInBadge.leadingAnchor, constant: 8),
-            builtInLabel.trailingAnchor.constraint(equalTo: builtInBadge.trailingAnchor, constant: -8)
-        ])
-        builtInBadge.isHidden = true
-        cardView.addSubview(builtInBadge)
-        
         NSLayoutConstraint.activate([
             cardView.topAnchor.constraint(equalTo: contentView.topAnchor),
             cardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             cardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             cardView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
             
-            nameLabel.topAnchor.constraint(equalTo: cardView.topAnchor, constant: 16),
-            nameLabel.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 16),
-            nameLabel.trailingAnchor.constraint(equalTo: menuButton.leadingAnchor, constant: -8),
+            menuButton.topAnchor.constraint(equalTo: cardView.topAnchor, constant: 8),
+            menuButton.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -8),
+            menuButton.widthAnchor.constraint(equalToConstant: 28),
+            menuButton.heightAnchor.constraint(equalToConstant: 28),
             
-            priorityStackView.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 12),
-            priorityStackView.centerXAnchor.constraint(equalTo: cardView.centerXAnchor),
-            priorityStackView.bottomAnchor.constraint(equalTo: cardView.bottomAnchor, constant: -16),
+            nameLabel.topAnchor.constraint(equalTo: cardView.topAnchor, constant: 12),
+            nameLabel.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 12),
+            nameLabel.trailingAnchor.constraint(equalTo: menuButton.leadingAnchor, constant: -6),
             
-            menuButton.topAnchor.constraint(equalTo: cardView.topAnchor, constant: 12),
-            menuButton.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -12),
-            menuButton.widthAnchor.constraint(equalToConstant: 32),
-            menuButton.heightAnchor.constraint(equalToConstant: 32),
+            priorityStackView.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 8),
+            priorityStackView.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 12),
+            priorityStackView.trailingAnchor.constraint(lessThanOrEqualTo: cardView.trailingAnchor, constant: -12),
             
-            builtInBadge.topAnchor.constraint(equalTo: cardView.topAnchor, constant: 16),
-            builtInBadge.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 16)
+            totalLabel.topAnchor.constraint(equalTo: priorityStackView.bottomAnchor, constant: 8),
+            totalLabel.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 12),
+            totalLabel.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -12),
+            totalLabel.bottomAnchor.constraint(equalTo: cardView.bottomAnchor, constant: -12),
+            totalLabel.heightAnchor.constraint(equalToConstant: 28)
         ])
     }
     
@@ -404,9 +590,41 @@ class TemplateCollectionViewCell: UICollectionViewCell {
         onMenuTapped?()
     }
     
+    private func createPriorityContainer(label: UILabel, color: UIColor, title: String) -> UIView {
+        let container = UIView()
+        container.backgroundColor = color.withAlphaComponent(0.12)
+        container.layer.cornerRadius = 6
+        container.layer.borderWidth = 1
+        container.layer.borderColor = color.withAlphaComponent(0.3).cgColor
+        container.translatesAutoresizingMaskIntoConstraints = false
+        
+        let titleLabel = UILabel()
+        titleLabel.text = "\(title):"
+        titleLabel.font = UIFont.systemFont(ofSize: 10, weight: .semibold)
+        titleLabel.textColor = color
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(titleLabel)
+        
+        label.font = UIFont.systemFont(ofSize: 12, weight: .bold)
+        label.textColor = color
+        label.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(label)
+        
+        NSLayoutConstraint.activate([
+            titleLabel.topAnchor.constraint(equalTo: container.topAnchor, constant: 4),
+            titleLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 6),
+            
+            label.topAnchor.constraint(equalTo: container.topAnchor, constant: 4),
+            label.leadingAnchor.constraint(equalTo: titleLabel.trailingAnchor, constant: 2),
+            label.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -6),
+            label.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -4)
+        ])
+        
+        return container
+    }
+    
     func configure(template: TripTemplate) {
         nameLabel.text = template.name
-        builtInBadge.isHidden = !template.isBuiltIn
         
         var p0Count = 0
         var p1Count = 0
@@ -423,6 +641,14 @@ class TemplateCollectionViewCell: UICollectionViewCell {
         p0Label.text = "\(p0Count)"
         p1Label.text = "\(p1Count)"
         p2Label.text = "\(p2Count)"
+        
+        let totalCount = p0Count + p1Count + p2Count
+        totalLabel.text = "\(totalCount) ITEMS TOTAL"
+        
+        // 隐藏数量为0的优先级
+        p0Container?.isHidden = p0Count == 0
+        p1Container?.isHidden = p1Count == 0
+        p2Container?.isHidden = p2Count == 0
     }
 }
 
